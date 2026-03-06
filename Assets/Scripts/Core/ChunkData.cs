@@ -31,6 +31,10 @@ public class ChunkData
 
                         voxelMap[index] = (byte)BlockType.Dirt;
 
+                    } else if (y == surfaceHeight) {// 64 with grass
+
+                        voxelMap[index] = (byte)BlockType.Grass;
+
                     } else {
                         //everything else y64->max is air
                         voxelMap[index] = (byte)BlockType.Air;

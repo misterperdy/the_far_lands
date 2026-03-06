@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using Unity.VisualScripting;
 using UnityEngine;
 
 [RequireComponent(typeof(MeshFilter), typeof(MeshRenderer))]
@@ -118,6 +119,17 @@ public class Chunk : MonoBehaviour
             return new Vector2(3, 4);
         }else if (blockID == (byte)BlockType.Dirt) {
             return new Vector2(7, 3);
+        }else if (blockID == (byte)BlockType.Grass) {
+            //based on which face it is, show top grass block or side grass block or dirt (bottom)
+            if(faceIndex == 2) { // top
+                return new Vector2(6, 7);
+            }
+            if(faceIndex == 3) { //bottom
+                return new Vector2(7, 3);
+            }
+            else { //3d sides
+                return new Vector2(7, 4);
+            }
         }
 
         //default value - light gray log (to know if it ever reaches this edge case for debugging)
