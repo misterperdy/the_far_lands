@@ -3,9 +3,14 @@ using System.Collections.Generic;
 using Unity.VisualScripting;
 using UnityEngine;
 
+//this script to be added to chunk prefab/gameobject and will generate logic for the chunk
+
 [RequireComponent(typeof(MeshFilter), typeof(MeshRenderer))]
 public class Chunk : MonoBehaviour
 {
+    //global chunk coordinate in world position
+    public Vector3Int chunkCoord;
+
     //component references
     private MeshFilter meshFilter;
     private MeshRenderer meshRenderer;
@@ -22,12 +27,17 @@ public class Chunk : MonoBehaviour
     //vertex count
     private int vertexIndex = 0;
 
-    private void Start() {
+    //function to be run by world manager to instantiate/configure this chunk
+    public void Init(Vector3Int coord) {
+        //remember chunk coordinates in world
+        chunkCoord = coord;
+
         meshFilter = GetComponent<MeshFilter>();
         meshRenderer = GetComponent<MeshRenderer>();
 
-        //init new chunk data, with dummy contrsusctor for testing
+        //generate chunk data information (actual terrain of the chunk)
         chunkData = new ChunkData();
+        chunkData.GenerateTerrain(chunkCoord);
 
         GenerateMesh();
     }

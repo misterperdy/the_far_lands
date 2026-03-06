@@ -1,4 +1,4 @@
-// pure c# code, no unity functions, we want MINIMUM OVERHEAD
+// pure c# code, no unity editor functionality (only minimum required ones like usage of vector3 for ex.), we want MINIMUM OVERHEAD
 
 // this script will hold the information for one chunk
 
@@ -11,19 +11,21 @@ public class ChunkData
     public byte[] voxelMap;
 
     public ChunkData() {
-        //constructor
+        //constructor, initialize the chunk's blocks 1d array
         voxelMap = new byte[VoxelData.ChunkVolume]; // length of 1d array = total volume of chunk
-
-        //temp function to populate with blocks until we get to procedural generation
-        GenerateTerrain();
     }
 
-    //procedurally generate terrain based on perlin noise
-    public void GenerateTerrain() {
+    //procedurally generate terrain based on perlin noise that takes in consideration local coord and global chunk coord
+    public void GenerateTerrain(Vector3Int chunkCoord) {
+        //go through all 2D flat coordinates, figure out for each what height terrain to reach
         for (int x = 0; x < VoxelData.ChunkWidth; x++) {
             for (int z = 0; z < VoxelData.ChunkDepth; z++) {
-                //generate perlin noise value
-                float noiseValue = Mathf.PerlinNoise(x * VoxelData.TerrainNoiseScale, z * VoxelData.TerrainNoiseScale);
+                //get global coordinates of this block
+                float globalX = (chunkCoord.x * VoxelData.ChunkWidth + x);
+                float globalZ = (chunkCoord.z * VoxelData.ChunkDepth + z);
+
+                //generate perlin noise value based on global block coordinates
+                float noiseValue = Mathf.PerlinNoise(globalX * VoxelData.TerrainNoiseScale, globalZ * VoxelData.TerrainNoiseScale);
 
                 //round/multiply to actual terrain height
                 int terrainHeight = Mathf.RoundToInt(noiseValue * VoxelData.TerrainHeightMultiplier) + VoxelData.TerrainSolidGroundHeight;
