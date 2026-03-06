@@ -65,4 +65,18 @@ public static class VoxelData
         new Vector3Int(1,0,0) //right
     };
 
+    //for texturing blocks, UV default standard coordinates for any square face, lookup table
+    public static readonly Vector2[] voxelUVs = new Vector2[4] {
+        new Vector2 (0.0f, 0.0f), // bottom left
+        new Vector2 (1.0f, 0.0f), // bottom right
+        new Vector2 (0.0f, 1.0f), // top left
+        new Vector2 (1.0f, 1.0f) // top right
+    };
+
+    //texture atlas = "spritesheet"
+    //how many textures of blocks per line in spritesheet (to know how to cut it)
+    public static readonly int TextureAtlasBlocksPerLine = 9; 
+
+    //fractional value for how much a block occupies - 100%/9 blocks per line = 0.111f
+    public static readonly float NormalizedBlockTextureSize = 1f / 9f;
 }
