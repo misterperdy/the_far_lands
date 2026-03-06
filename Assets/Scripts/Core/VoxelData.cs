@@ -79,4 +79,10 @@ public static class VoxelData
 
     //fractional value for how much a block occupies - 100%/9 blocks per line = 0.111f
     public static readonly float NormalizedBlockTextureSize = 1f / 9f;
+
+
+    // -------- Terrain Generation data --------
+    public static readonly float TerrainNoiseScale = 0.05f; // zoom on noisemap ; smaller = smoother terrain ; larger = rougher terrain
+    public static readonly int TerrainHeightMultiplier = 15; //how tall mountains will be
+    public static readonly int TerrainSolidGroundHeight = 10; // base height of world
 }
