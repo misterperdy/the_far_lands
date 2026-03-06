@@ -68,7 +68,7 @@ public class Chunk : MonoBehaviour
                 vertices.Add(pos + VoxelData.voxelVerts[VoxelData.voxelTris[i, 3]]);
 
                 //UV texturing ,also send face index, for expansion capabilities for different block textures based on face orientation
-                AddTexture(blockID, i);
+                AddTexture(blockID, i, pos);
 
                 //add to list of points to draw triangles (to draw a square, we draw 2 triangles)
 
@@ -98,7 +98,7 @@ public class Chunk : MonoBehaviour
     }
 
     //
-    private void AddTexture(byte blockID, int faceIndex) {
+    private void AddTexture(byte blockID, int faceIndex, Vector3Int pos) {
         //get texture position from texture atlas
         Vector2 texturePos = GetTexturePosition(blockID, faceIndex);
 
@@ -106,11 +106,33 @@ public class Chunk : MonoBehaviour
         float x = texturePos.x;
         float y = texturePos.y;
 
-        //add UV points
-        uvs.Add(new Vector2(x, y) * VoxelData.NormalizedBlockTextureSize);
-        uvs.Add(new Vector2(x + 1, y) * VoxelData.NormalizedBlockTextureSize);
-        uvs.Add(new Vector2(x + 1, y + 1) * VoxelData.NormalizedBlockTextureSize);
-        uvs.Add(new Vector2(x, y + 1) * VoxelData.NormalizedBlockTextureSize);
+        //find out the UV points coordinates, with no rotation applied
+        Vector2[] defaultUVs = new Vector2[4];
+        defaultUVs[0] = new Vector2(x, y) * VoxelData.NormalizedBlockTextureSize;
+        defaultUVs[1] = new Vector2(x + 1, y) * VoxelData.NormalizedBlockTextureSize;
+        defaultUVs[2] = new Vector2(x + 1, y + 1) * VoxelData.NormalizedBlockTextureSize;
+        defaultUVs[3] = new Vector2(x, y + 1) * VoxelData.NormalizedBlockTextureSize;
+
+        //logic to pseudo-randomize texture rotation based on coordinates
+
+        int rotation = 0;
+
+        //if it's grass side block, don't apply this logic, it will mess it up, but for every other block do it
+        if (blockID == (byte)BlockType.Grass && faceIndex != 2 && faceIndex != 3) {
+            //don't rotate anything
+        } else {
+            //pseudo random number based on coordinates
+            int hash = Mathf.Abs(pos.x * 123 + pos.y * 456 + pos.z * 789);
+            rotation = hash % 4;
+        }
+        
+        //add uvs to uv list
+        for(int i = 0; i < 4; i++) {
+
+            //push start index based on rotation
+            int rotatedIndex = (i + rotation) % 4;
+            uvs.Add(defaultUVs[rotatedIndex]);
+        }
     }
 
     //get texture position from atlas of blocks, we are using UV coordinates so its starts from bottom left and in form of (u,v) aka (x,y)
