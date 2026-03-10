@@ -17,6 +17,8 @@ public class Chunk : MonoBehaviour
 
     private ChunkData chunkData;
 
+    private _worldManager _world;
+
     //dynamic sized lists we will use to draw the mesh
     private List<Vector3> vertices = new List<Vector3>();
     private List<int> triangles = new List<int>();
@@ -28,9 +30,10 @@ public class Chunk : MonoBehaviour
     private int vertexIndex = 0;
 
     //function to be run by world manager to instantiate/configure this chunk
-    public void Init(Vector3Int coord) {
+    public void Init(Vector3Int coord, _worldManager _world) {
         //remember chunk coordinates in world
         chunkCoord = coord;
+        this._world = _world;
 
         meshFilter = GetComponent<MeshFilter>();
         meshRenderer = GetComponent<MeshRenderer>();
@@ -39,11 +42,12 @@ public class Chunk : MonoBehaviour
         chunkData = new ChunkData();
         chunkData.GenerateTerrain(chunkCoord);
 
-        GenerateMesh();
+        //no longer generate mesh when init chunk, we generate it after all chunks have been initiialized in world
+        //GenerateMesh();
     }
 
     //generate the mesh from chunk data
-    private void GenerateMesh() {
+    public void GenerateMesh() {
         for (int x = 0; x < VoxelData.ChunkWidth; x++) {
             for (int y = 0; y < VoxelData.ChunkHeight; y++) {
                 for (int z = 0; z < VoxelData.ChunkDepth; z++) {
@@ -99,8 +103,17 @@ public class Chunk : MonoBehaviour
         }
     }
 
-    //helper function to check if block from vector3 is air , with out of bounds protection
+    //helper function to check if block from vector3 is air , with out of bounds protection & GLOBAL CULLING - asks world to retrieve block no matter if its in this chunk or not
     private bool CheckAir(Vector3Int pos) {
+        //if we are outside of chunk - GLOBAL CULLING
+        if(pos.x < 0 || pos.x >= VoxelData.ChunkWidth || pos.y < 0 || pos.y >= VoxelData.ChunkHeight || pos.z < 0 || pos.z >= VoxelData.ChunkDepth) {
+            Vector3Int globalPos = new Vector3Int(pos.x + (chunkCoord.x * VoxelData.ChunkWidth), pos.y, pos.z + (chunkCoord.z * VoxelData.ChunkDepth));
+
+            //ask world manager what block is there and return true if its air, or return false if its not
+            return _world.GetVoxelGlobal(globalPos) == (byte)BlockType.Air;
+        }
+
+        //if we havent exited this chunk retrieve block id locally
         byte blockID = chunkData.GetVoxel(pos.x, pos.y, pos.z);
         if (blockID == (byte)BlockType.Air) return true;
 
@@ -180,5 +193,10 @@ public class Chunk : MonoBehaviour
         mesh.RecalculateNormals(); // for shadows and lights to shine correctly
 
         meshFilter.mesh = mesh;
+    }
+
+    //to keep chunkData private
+    public byte GetVoxelFromChunkData(int x, int y, int z) {
+        return chunkData.GetVoxel(x, y, z);
     }
 }

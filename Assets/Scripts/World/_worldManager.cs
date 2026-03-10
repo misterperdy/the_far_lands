@@ -34,11 +34,42 @@ public class _worldManager : MonoBehaviour {
 
                 //init the chunk
                 Chunk newChunkScript = newChunk.GetComponent<Chunk>();
-                newChunkScript.Init(chunkCoord);
+                //DEPENDENCY INJECTION - send this world object in init of new chunk to avoid static variables (problems with unity scene changing)
+                newChunkScript.Init(chunkCoord, this);
 
                 //save chunk in dictionary
                 chunks.Add(chunkCoord, newChunkScript);
             }
         }
+
+        //after all chunks have been initialized, generate geometry
+        foreach (var chunk in chunks.Values) {
+            chunk.GenerateMesh();
+        }
+    }
+
+    //function that takes coordinates and looks in chunks dictionary->chunk's array to find the exact block at those coordinates
+    public byte GetVoxelGlobal(Vector3Int globalPos) {
+        //find the chunk, floorToInt used to make sure negative numbers round correctly
+        int chunkX = Mathf.FloorToInt((float)globalPos.x / VoxelData.ChunkWidth);
+        int chunkZ = Mathf.FloorToInt((float)globalPos.z / VoxelData.ChunkDepth);
+
+        //we have the exact chunk's coords
+        Vector3Int targetchunkCoord = new Vector3Int(chunkX, 0, chunkZ);
+
+        // check if chunk is in dictionary
+        if(chunks.TryGetValue(targetchunkCoord, out Chunk neighbourChunk)) {
+            
+            //get local block coordinate
+            int localX = globalPos.x - (targetchunkCoord.x * VoxelData.ChunkWidth);
+            int localY = globalPos.y; // y is unchanged
+            int localZ = globalPos.z - (targetchunkCoord.z * VoxelData.ChunkDepth);
+
+            //get block
+            return neighbourChunk.GetVoxelFromChunkData(localX, localY, localZ);
+        }
+        
+        //fallback return air
+        return (byte)BlockType.Air;
     }
 }
