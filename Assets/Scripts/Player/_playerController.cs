@@ -9,6 +9,7 @@ public class _playerController : MonoBehaviour
     public float walkSpeed = 4.3f;
     public float gravity = -19f;
     public float jumpHeight = 1.25f;
+    public float airControl = 3f; // how hard to change direction mid air( smalleer -> harder)
 
     [Header("Camera Settings")]
     public Transform playerCamera;
@@ -18,6 +19,7 @@ public class _playerController : MonoBehaviour
     private CharacterController _controller;
 
     private Vector3 velocity;
+    private Vector3 currentMoveVelocity;
 
     private void Start() {
         _controller = GetComponent<CharacterController>();
@@ -52,12 +54,16 @@ public class _playerController : MonoBehaviour
         //get raw input
         float x = Input.GetAxisRaw("Horizontal"); //A,D
         float z = Input.GetAxisRaw("Vertical"); //W,S
+        Vector3 targetMove = (transform.right * x + transform.forward * z).normalized * walkSpeed;
 
-        //calculate direction based on player rotation
-        Vector3 move = (transform.right * x + transform.forward * z).normalized;
+        if (_controller.isGrounded) { // on ground keep raw speed
+            currentMoveVelocity = targetMove;
+        } else { // on air lerp to have some inertia in changing direction
+            currentMoveVelocity = Vector3.Lerp(currentMoveVelocity, targetMove, airControl * Time.deltaTime);
+        }
 
         //apply horizontal movement
-        _controller.Move(move * walkSpeed * Time.deltaTime);
+        _controller.Move(currentMoveVelocity * Time.deltaTime);
 
         //ground check
         if(_controller.isGrounded && velocity.y < 0) {
