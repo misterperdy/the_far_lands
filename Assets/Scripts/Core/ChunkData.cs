@@ -93,4 +93,10 @@ public class ChunkData
         int index = VoxelData.Get1DIndex(x, y, z);
         return voxelMap[index];
     }
+
+    //set coords to certain block
+    public void SetVoxel(int x,int y, int z, byte blockID) {
+        int index = VoxelData.Get1DIndex(x, y, z);
+        voxelMap[index] = blockID;
+    }
 }

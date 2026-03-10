@@ -72,4 +72,29 @@ public class _worldManager : MonoBehaviour {
         //fallback return air
         return (byte)BlockType.Air;
     }
+
+    //function that takes coordinates & block id and looks in chunks dictionary->chunk's array to find the exact block at those coordinates and replace it with blockID
+    public void SetVoxelGlobal(Vector3Int globalPos, byte blockID) {
+        //find the chunk, floorToInt used to make sure negative numbers round correctly
+        int chunkX = Mathf.FloorToInt((float)globalPos.x / VoxelData.ChunkWidth);
+        int chunkZ = Mathf.FloorToInt((float)globalPos.z / VoxelData.ChunkDepth);
+
+        //we have the exact chunk's coords
+        Vector3Int targetchunkCoord = new Vector3Int(chunkX, 0, chunkZ);
+
+        // check if chunk is in dictionary
+        if (chunks.TryGetValue(targetchunkCoord, out Chunk targetChunk)) {
+            //get local block coordinate
+            int localX = globalPos.x - (targetchunkCoord.x * VoxelData.ChunkWidth);
+            int localY = globalPos.y; // y is unchanged
+            int localZ = globalPos.z - (targetchunkCoord.z * VoxelData.ChunkDepth);
+
+            //set new id
+            targetChunk.SetVoxelToChunkData(localX, localY, localZ, blockID);
+
+            //regenrate mesh
+            targetChunk.GenerateMesh();
+
+        }
+    }
 }

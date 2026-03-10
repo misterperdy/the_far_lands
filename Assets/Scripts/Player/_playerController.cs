@@ -16,6 +16,11 @@ public class _playerController : MonoBehaviour
     public float mouseSensitivity = 2f;
     private float cameraPitch = 0f; //to rotate on x axis
 
+    [Header("Interaction Setttings")]
+    public float reach = 4f;
+    public Transform highlightBlock; // selected block highlighter
+
+    private _worldManager _world;
     private CharacterController _controller;
 
     private Vector3 velocity;
@@ -23,6 +28,7 @@ public class _playerController : MonoBehaviour
 
     private void Start() {
         _controller = GetComponent<CharacterController>();
+        _world = FindObjectOfType<_worldManager>();
 
         //lock cursor in middle
         Cursor.lockState = CursorLockMode.Locked;
@@ -32,6 +38,7 @@ public class _playerController : MonoBehaviour
     private void Update() {
         HandleMouseLook();
         HandleMovement();
+        HandleInteraction();
     }
 
     //get mouse input, rotate pitch/yaw
@@ -80,5 +87,46 @@ public class _playerController : MonoBehaviour
 
         //move controller on vertical
         _controller.Move(velocity * Time.deltaTime);
+    }
+
+    private void HandleInteraction() {
+        //raycast
+        Ray ray = new Ray(playerCamera.position, playerCamera.forward);
+        RaycastHit hit;
+
+        //if we hit a collider
+        if(Physics.Raycast(ray, out hit, reach)) {
+            //we are right on block edge
+            //if we go a little bit in direction of ray direction we are inside the block we can break
+            //and if we go a little bit in the opposite direction of ray direction we are outside where we need to place
+            //and rounding to int we get the exact block coordinates we need to operate on
+
+            Vector3 pointInSolidBlock = hit.point + (ray.direction * 0.01f);
+            Vector3Int breakCoord = new Vector3Int(Mathf.FloorToInt(pointInSolidBlock.x), Mathf.FloorToInt(pointInSolidBlock.y), Mathf.FloorToInt(pointInSolidBlock.z));
+
+            Vector3 pointInEmptyAir = hit.point - (ray.direction * 0.01f);
+            Vector3Int placeCoord = new Vector3Int(Mathf.FloorToInt(pointInEmptyAir.x), Mathf.FloorToInt(pointInEmptyAir.y), Mathf.FloorToInt(pointInEmptyAir.z));
+
+            //outline
+            if (highlightBlock != null) {
+                highlightBlock.gameObject.SetActive(true);
+                highlightBlock.position = new Vector3(breakCoord.x + 0.5f, breakCoord.y + 0.5f, breakCoord.z + 0.5f);
+            }
+
+            //break block logic
+            if (Input.GetMouseButtonDown(0)) {
+                _world.SetVoxelGlobal(breakCoord, (byte)BlockType.Air); // we replace block with air
+            }
+
+            //place block logic
+            if (Input.GetMouseButtonDown(1)) {
+                _world.SetVoxelGlobal(placeCoord, (byte)BlockType.Stone); // place stone for now
+            }
+        } else {
+            //no raycasthit , hide block outline
+            if (highlightBlock != null) {
+                highlightBlock.gameObject.SetActive(false);
+            }
+        }
     }
 }

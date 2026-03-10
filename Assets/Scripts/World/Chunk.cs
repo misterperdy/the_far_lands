@@ -50,6 +50,12 @@ public class Chunk : MonoBehaviour
 
     //generate the mesh from chunk data
     public void GenerateMesh() {
+        //CLEAR OLD MESH
+        vertices.Clear();
+        triangles.Clear();
+        uvs.Clear();
+        vertexIndex = 0;
+
         for (int x = 0; x < VoxelData.ChunkWidth; x++) {
             for (int y = 0; y < VoxelData.ChunkHeight; y++) {
                 for (int z = 0; z < VoxelData.ChunkDepth; z++) {
@@ -195,11 +201,16 @@ public class Chunk : MonoBehaviour
         mesh.RecalculateNormals(); // for shadows and lights to shine correctly
 
         meshFilter.mesh = mesh; //send to gpu to render
+        meshCollider.sharedMesh = null; //to make sure to reset collider mesh when updating mesh
         meshCollider.sharedMesh = mesh; //create collider of mesh shape
     }
 
     //to keep chunkData private
     public byte GetVoxelFromChunkData(int x, int y, int z) {
         return chunkData.GetVoxel(x, y, z);
+    }
+
+    public void SetVoxelToChunkData(int x, int y, int z, byte blockID) {
+        chunkData.SetVoxel(x, y, z, blockID);
     }
 }
