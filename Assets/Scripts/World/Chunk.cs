@@ -5,7 +5,7 @@ using UnityEngine;
 
 //this script to be added to chunk prefab/gameobject and will generate logic for the chunk
 
-[RequireComponent(typeof(MeshFilter), typeof(MeshRenderer))]
+[RequireComponent(typeof(MeshFilter), typeof(MeshRenderer), typeof(MeshCollider))]
 public class Chunk : MonoBehaviour
 {
     //global chunk coordinate in world position
@@ -14,6 +14,7 @@ public class Chunk : MonoBehaviour
     //component references
     private MeshFilter meshFilter;
     private MeshRenderer meshRenderer;
+    private MeshCollider meshCollider;
 
     private ChunkData chunkData;
 
@@ -37,6 +38,7 @@ public class Chunk : MonoBehaviour
 
         meshFilter = GetComponent<MeshFilter>();
         meshRenderer = GetComponent<MeshRenderer>();
+        meshCollider = GetComponent<MeshCollider>();
 
         //generate chunk data information (actual terrain of the chunk)
         chunkData = new ChunkData();
@@ -192,7 +194,8 @@ public class Chunk : MonoBehaviour
 
         mesh.RecalculateNormals(); // for shadows and lights to shine correctly
 
-        meshFilter.mesh = mesh;
+        meshFilter.mesh = mesh; //send to gpu to render
+        meshCollider.sharedMesh = mesh; //create collider of mesh shape
     }
 
     //to keep chunkData private
