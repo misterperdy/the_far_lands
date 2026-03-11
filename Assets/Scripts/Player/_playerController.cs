@@ -120,7 +120,23 @@ public class _playerController : MonoBehaviour
 
             //place block logic
             if (Input.GetMouseButtonDown(1)) {
-                _world.SetVoxelGlobal(placeCoord, (byte)BlockType.Stone); // place stone for now
+
+                //logic to prevent placing block inside player using BOUNDS
+                //each object has BOUNDS = "collision box" enclosing itself, we will create bounds for a block and check if it overlaps with character controller's bounds box
+
+                Vector3 blockCenter = new Vector3(placeCoord.x + 0.5f, placeCoord.y + 0.5f, placeCoord.z + 0.5f);
+                Bounds blockBonds = new Bounds(blockCenter, Vector3.one);
+                Bounds playerBounds = _controller.bounds;
+
+                //check if they overlap
+                if (!playerBounds.Intersects(blockBonds)) {
+                    //place block if they dont
+
+                    _world.SetVoxelGlobal(placeCoord, (byte)BlockType.Stone); // place stone for now
+                } else {
+                    Debug.Log("overlap player");
+                }
+                
             }
         } else {
             //no raycasthit , hide block outline
