@@ -37,6 +37,9 @@ public class _worldManager : MonoBehaviour {
     //we will create our own queue instead of using Unity's object pool for 100% code transparency
     private Queue<Chunk> chunkPool = new Queue<Chunk>();
 
+    //waiting queue for loading chunk tasks
+    private Queue<Vector3Int> chunksToLoadQueue = new Queue<Vector3Int> ();
+
     private void Start() {
 
         if (useRandomSeed) {
@@ -66,6 +69,16 @@ public class _worldManager : MonoBehaviour {
     }
 
     private void Update() {
+        //generate 1 chunk per frame for loading queue to avoid lag spikes
+        if (chunksToLoadQueue.Count > 0) {
+            Vector3Int nextChunkCoord = chunksToLoadQueue.Dequeue();
+
+            //make sure its not already loaded
+            if (!activeChunks.ContainsKey(nextChunkCoord)) {
+                LoadChunk(nextChunkCoord); // load it
+            }
+        }
+
         //internal clock to check new chunks, avoinding IEnumerators
         chunkUpdateTimer -= Time.deltaTime;
 
@@ -110,9 +123,9 @@ public class _worldManager : MonoBehaviour {
             for (int z = -renderDistance; z <= renderDistance; z++) {
                 Vector3Int coord = new Vector3Int(playerChunkX + x, 0, playerChunkZ + z);
 
-                //if its not already visible, load it
-                if (!activeChunks.ContainsKey(coord)) {
-                    LoadChunk(coord); 
+                //if its not already visible, add to loading queue
+                if (!activeChunks.ContainsKey(coord) && !chunksToLoadQueue.Contains(coord)) {
+                    chunksToLoadQueue.Enqueue(coord);
                 }
             }
         }
