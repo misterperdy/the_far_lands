@@ -14,12 +14,12 @@ OcclusionCullingSettings:
 RenderSettings:
   m_ObjectHideFlags: 0
   serializedVersion: 9
-  m_Fog: 0
-  m_FogColor: {r: 0.5, g: 0.5, b: 0.5, a: 1}
-  m_FogMode: 3
+  m_Fog: 1
+  m_FogColor: {r: 0.39609292, g: 0.5001136, b: 0.6509434, a: 1}
+  m_FogMode: 1
   m_FogDensity: 0.01
-  m_LinearFogStart: 0
-  m_LinearFogEnd: 300
+  m_LinearFogStart: 48
+  m_LinearFogEnd: 64
   m_AmbientSkyColor: {r: 0.212, g: 0.227, b: 0.259, a: 1}
   m_AmbientEquatorColor: {r: 0.114, g: 0.125, b: 0.133, a: 1}
   m_AmbientGroundColor: {r: 0.047, g: 0.043, b: 0.035, a: 1}
@@ -566,6 +566,7 @@ MonoBehaviour:
   mouseSensitivity: 2
   reach: 4
   highlightBlock: {fileID: 960286}
+  interactionDelay: 0.15
 --- !u!143 &634149125
 CharacterController:
   m_ObjectHideFlags: 0
@@ -865,6 +866,13 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   chunkPrefab: {fileID: 808868321556646356, guid: 0576ae1debfd7af4591d51864e886cae,
     type: 3}
+  playerTransform: {fileID: 634149126}
+  renderDistance: 4
+  chunkUpdateInterval: 0.5
+  seed: 0
+  useRandomSeed: 1
+  offsetX: 0
+  offsetZ: 0
   worldSizeInChunks: 10
 --- !u!4 &1993332512
 Transform:
