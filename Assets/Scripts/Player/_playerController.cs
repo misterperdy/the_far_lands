@@ -69,24 +69,25 @@ public class _playerController : MonoBehaviour
             currentMoveVelocity = Vector3.Lerp(currentMoveVelocity, targetMove, airControl * Time.deltaTime);
         }
 
-        //apply horizontal movement
-        _controller.Move(currentMoveVelocity * Time.deltaTime);
-
         //ground check
         if(_controller.isGrounded && velocity.y < 0) {
             velocity.y = -2f; //pull down to be connected 100% to the ground
         }
 
         //jump
-        if(Input.GetButtonDown("Jump") && _controller.isGrounded) {
+        if(Input.GetButton("Jump") && _controller.isGrounded) {
             velocity.y = Mathf.Sqrt(jumpHeight * -2f * gravity);
         }
 
         //apply gravity
         velocity.y += gravity * Time.deltaTime;
 
-        //move controller on vertical
-        _controller.Move(velocity * Time.deltaTime);
+        //create vector with both horizontal and vertical movement
+
+        Vector3 finalMove = new Vector3(currentMoveVelocity.x, velocity.y, currentMoveVelocity.z);
+
+        //move controller, we are multiplying with time so it's not dependant on FPS, but rather on time
+        _controller.Move(finalMove * Time.deltaTime);
     }
 
     private void HandleInteraction() {
