@@ -19,6 +19,8 @@ public class _playerController : MonoBehaviour
     [Header("Interaction Setttings")]
     public float reach = 4f;
     public Transform highlightBlock; // selected block highlighter
+    public float interactionDelay = 0.15f; //delay when holding click to break/place
+    private float interactionTimer = 0f;
 
     private _worldManager _world;
     private CharacterController _controller;
@@ -114,13 +116,19 @@ public class _playerController : MonoBehaviour
                 highlightBlock.position = new Vector3(breakCoord.x + 0.5f, breakCoord.y + 0.5f, breakCoord.z + 0.5f);
             }
 
+            //update interaction timer
+            if(interactionTimer > 0) {
+                interactionTimer -= Time.deltaTime;
+            }
+
             //break block logic
-            if (Input.GetMouseButtonDown(0)) {
+            if (Input.GetMouseButtonDown(0) || (Input.GetMouseButton(0) && interactionTimer<=0f)) {
                 _world.SetVoxelGlobal(breakCoord, (byte)BlockType.Air); // we replace block with air
+                interactionTimer = interactionDelay; // init the timer for hold to break
             }
 
             //place block logic
-            if (Input.GetMouseButtonDown(1)) {
+            if (Input.GetMouseButtonDown(1) || (Input.GetMouseButton(1) && interactionTimer <= 0f)) {
 
                 //logic to prevent placing block inside player using BOUNDS
                 //each object has BOUNDS = "collision box" enclosing itself, we will create bounds for a block and check if it overlaps with character controller's bounds box
@@ -137,7 +145,8 @@ public class _playerController : MonoBehaviour
                 } else {
                     Debug.Log("overlap player");
                 }
-                
+
+                interactionTimer = interactionDelay; // init the timer for hold to place
             }
         } else {
             //no raycasthit , hide block outline
