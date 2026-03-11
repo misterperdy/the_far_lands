@@ -566,6 +566,7 @@ MonoBehaviour:
   mouseSensitivity: 2
   reach: 4
   highlightBlock: {fileID: 960286}
+  interactionDelay: 0.15
 --- !u!143 &634149125
 CharacterController:
   m_ObjectHideFlags: 0
@@ -865,6 +866,13 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   chunkPrefab: {fileID: 808868321556646356, guid: 0576ae1debfd7af4591d51864e886cae,
     type: 3}
+  playerTransform: {fileID: 634149126}
+  renderDistance: 4
+  chunkUpdateInterval: 0.5
+  seed: 0
+  useRandomSeed: 1
+  offsetX: 0
+  offsetZ: 0
   worldSizeInChunks: 10
 --- !u!4 &1993332512
 Transform:
