@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using Unity.VisualScripting;
 using UnityEngine;
 
 public class _worldManager : MonoBehaviour {
@@ -32,6 +33,10 @@ public class _worldManager : MonoBehaviour {
     // one for CHUNKS visual representation, will only instantiate what is required based on radius/render distance
     private Dictionary<Vector3Int, Chunk> activeChunks = new Dictionary<Vector3Int, Chunk> ();
 
+    //object pool for chunks
+    //we will create our own queue instead of using Unity's object pool for 100% code transparency
+    private Queue<Chunk> chunkPool = new Queue<Chunk>();
+
     private void Start() {
 
         if (useRandomSeed) {
@@ -44,6 +49,17 @@ public class _worldManager : MonoBehaviour {
         offsetZ = Random.Range(-100000f, 100000f);
 
         Debug.Log("generating world with Seed: " + seed);
+
+        //init pool
+        int poolSize = (renderDistance * 2 + 1) * (renderDistance * 2 + 1) + renderDistance; //render distance squiared + render distance safety padding 
+        
+        for(int i = 0; i < poolSize; i++) {
+            GameObject newChunkObj = Instantiate(chunkPrefab, Vector3.zero, Quaternion.identity);
+            newChunkObj.SetActive(false);
+
+            Chunk newChunk = newChunkObj.GetComponent<Chunk>();
+            chunkPool.Enqueue(newChunk);
+        }
 
         //force first generation instantly
         UpdateChunksAroundPlayer();
@@ -79,7 +95,12 @@ public class _worldManager : MonoBehaviour {
         }
 
         foreach (Vector3Int coord in chunksToRemove) {
-            Destroy(activeChunks[coord].gameObject); // destroy chunk gameobject
+            //set hidden and add to queue pool
+            Chunk chunk = activeChunks[coord];
+
+            chunk.gameObject.SetActive(false);
+            chunkPool.Enqueue(chunk);
+
             activeChunks.Remove(coord); // remove from active list
             //we let it remain in worldData so any changes to it remain
         }
@@ -108,18 +129,27 @@ public class _worldManager : MonoBehaviour {
             worldData.Add(coord, newData);
         }
 
-        //now instantiate visual chunk
-        Vector3 spawnPosition = new Vector3(coord.x * VoxelData.ChunkWidth, 0, coord.z * VoxelData.ChunkDepth);
-        GameObject newChunkObj = Instantiate(chunkPrefab, spawnPosition, Quaternion.identity);
+        //try grab from pool avaialble chunk
+        Chunk targetChunk;
 
-        Chunk newChunk = newChunkObj.GetComponent<Chunk>();
+        if(chunkPool.Count > 0) {
+            targetChunk = chunkPool.Dequeue();
+            targetChunk.gameObject.SetActive(true);
+        } else {
+            Debug.Log("chunk pool empty, instantiating new chunk");
+            GameObject newChunkObj = Instantiate(chunkPrefab);
+            targetChunk = newChunkObj.GetComponent<Chunk>();
+        }
 
-        //initialize the chunk with data from dicitonary
-        newChunk.Init(coord, this, worldData[coord]);
-        newChunk.GenerateMesh();
+        //new transform
+        targetChunk.transform.position = new Vector3(coord.x * VoxelData.ChunkWidth, 0, coord.z * VoxelData.ChunkDepth);
+
+        //init with new data and redraw it
+        targetChunk.Init(coord, this, worldData[coord]);
+        targetChunk.GenerateMesh();
 
         //add to list of active chunks
-        activeChunks.Add(coord, newChunk);
+        activeChunks.Add(coord, targetChunk);
     }
 
     /* previous fixed world generate function
