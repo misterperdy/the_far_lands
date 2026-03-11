@@ -95,6 +95,33 @@ public class _worldManager : MonoBehaviour {
             //regenrate mesh
             targetChunk.GenerateMesh();
 
+            //If we are on chunk edge, then we also need to update the neighbour chunk, or else it would remain with empty edge face
+
+            //if we are on X=0 we need to update chunk with x-1 coord
+            if(localX == 0) {
+                UpdateChunkMesh(new Vector3Int(targetchunkCoord.x - 1, targetchunkCoord.y, targetchunkCoord.z));
+            }
+
+            //x=15(width-1) we need to update chunk of x+1
+            if (localX == VoxelData.ChunkWidth - 1) {
+                UpdateChunkMesh(new Vector3Int(targetchunkCoord.x + 1, targetchunkCoord.y, targetchunkCoord.z));
+            }
+
+            //z=0->update chunk of z - 1 and z=15 update chunk of z + 1
+            if (localZ == 0) {
+                UpdateChunkMesh(new Vector3Int(targetchunkCoord.x, targetchunkCoord.y, targetchunkCoord.z - 1));
+            }
+
+            if (localZ == VoxelData.ChunkDepth - 1) {
+                UpdateChunkMesh(new Vector3Int(targetchunkCoord.x, targetchunkCoord.y, targetchunkCoord.z + 1));
+            }
+        }
+    }
+
+    //helper function to get a chunk coordinates and if they exist in the dictionary update its mesh
+    private void UpdateChunkMesh(Vector3Int coord) {
+        if(chunks.TryGetValue(coord, out Chunk neighbourChunk)) {
+            neighbourChunk.GenerateMesh();
         }
     }
 }
