@@ -138,11 +138,16 @@ public class Chunk : MonoBehaviour
         float y = texturePos.y;
 
         //find out the UV points coordinates, with no rotation applied
+
+        //shrink them a little bit to prevent texture bleeding
+
+        float shrink = 0.01f;
+
         Vector2[] defaultUVs = new Vector2[4];
-        defaultUVs[0] = new Vector2(x, y) * VoxelData.NormalizedBlockTextureSize;
-        defaultUVs[1] = new Vector2(x + 1, y) * VoxelData.NormalizedBlockTextureSize;
-        defaultUVs[2] = new Vector2(x + 1, y + 1) * VoxelData.NormalizedBlockTextureSize;
-        defaultUVs[3] = new Vector2(x, y + 1) * VoxelData.NormalizedBlockTextureSize;
+        defaultUVs[0] = new Vector2(x + shrink, y + shrink) * VoxelData.NormalizedBlockTextureSize; //bottom left
+        defaultUVs[1] = new Vector2(x + 1 - shrink, y + shrink) * VoxelData.NormalizedBlockTextureSize; //bottom right
+        defaultUVs[2] = new Vector2(x + 1 - shrink, y + 1 - shrink) * VoxelData.NormalizedBlockTextureSize; //top right
+        defaultUVs[3] = new Vector2(x + shrink, y + 1 - shrink) * VoxelData.NormalizedBlockTextureSize; //top left
 
         //logic to pseudo-randomize texture rotation based on coordinates
 
