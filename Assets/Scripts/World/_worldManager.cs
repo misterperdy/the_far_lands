@@ -6,6 +6,13 @@ public class _worldManager : MonoBehaviour {
     //assign in inspector
     public GameObject chunkPrefab;
 
+    [Header("World Generator Settings")]
+    public int seed;
+    public bool useRandomSeed = true;
+
+    [HideInInspector] public float offsetX; // offsets for perln noiuse map
+    [HideInInspector] public float offsetZ;
+
     public int worldSizeInChunks = 10; // it will generate a grid of 10x10
 
     //MAP OF CHUNKS - basically the world storage map
@@ -13,6 +20,18 @@ public class _worldManager : MonoBehaviour {
     public Dictionary<Vector3Int, Chunk> chunks = new Dictionary<Vector3Int, Chunk>();
 
     private void Start() {
+
+        if (useRandomSeed) {
+            seed = Random.Range(-99999, 99999);
+        }
+
+        //init random generator to generate DIFFERENT numbers
+        Random.InitState(seed);
+        offsetX = Random.Range(-100000f, 100000f);
+        offsetZ = Random.Range(-100000f, 100000f);
+
+        Debug.Log("generating world with Seed: " + seed);
+
         //generate a world of fixed size for demonstration
         GenerateFixedWorld();
     }

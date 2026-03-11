@@ -41,7 +41,7 @@ public class Chunk : MonoBehaviour
         meshCollider = GetComponent<MeshCollider>();
 
         //generate chunk data information (actual terrain of the chunk)
-        chunkData = new ChunkData();
+        chunkData = new ChunkData(_world); //pass world to chunkData with dependency injection
         chunkData.GenerateTerrain(chunkCoord);
 
         //no longer generate mesh when init chunk, we generate it after all chunks have been initiialized in world

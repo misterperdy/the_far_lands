@@ -10,9 +10,13 @@ public class ChunkData
     //1d array that holds the blocks in this chunk
     public byte[] voxelMap;
 
-    public ChunkData() {
+    private _worldManager _world; //reference passed with dependency injection in constructor from Chunk script
+
+    public ChunkData(_worldManager _world) {
         //constructor, initialize the chunk's blocks 1d array
         voxelMap = new byte[VoxelData.ChunkVolume]; // length of 1d array = total volume of chunk
+        
+        this._world = _world;
     }
 
     //procedurally generate terrain based on perlin noise that takes in consideration local coord and global chunk coord
@@ -25,7 +29,7 @@ public class ChunkData
                 float globalZ = (chunkCoord.z * VoxelData.ChunkDepth + z);
 
                 //generate perlin noise value based on global block coordinates
-                float noiseValue = Mathf.PerlinNoise(globalX * VoxelData.TerrainNoiseScale, globalZ * VoxelData.TerrainNoiseScale);
+                float noiseValue = Mathf.PerlinNoise((globalX + _world.offsetX )* VoxelData.TerrainNoiseScale, (globalZ + _world.offsetZ) * VoxelData.TerrainNoiseScale);
 
                 //round/multiply to actual terrain height
                 int terrainHeight = Mathf.RoundToInt(noiseValue * VoxelData.TerrainHeightMultiplier) + VoxelData.TerrainSolidGroundHeight;
