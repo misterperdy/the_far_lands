@@ -173,6 +173,7 @@ public class Chunk : MonoBehaviour
     }
 
     //get texture position from atlas of blocks, we are using UV coordinates so its starts from bottom left and in form of (u,v) aka (x,y)
+    //HERE WE ADD MORE BLOCK TEXTURES AFTER ADDING BLOCK TYPE
     private Vector2 GetTexturePosition(byte blockID, int faceIndex) {
         if (blockID == (byte)BlockType.Stone) {
             return new Vector2(3, 4);
@@ -189,6 +190,14 @@ public class Chunk : MonoBehaviour
             else { //3d sides
                 return new Vector2(7, 4);
             }
+        }else if (blockID == (byte)BlockType.Planks) {
+            return new Vector2(0, 8);
+        } else if (blockID == (byte)BlockType.Bricks) {
+            return new Vector2(8, 5);
+        } else if (blockID == (byte)BlockType.StoneBricks) {
+            return new Vector2(4, 6);
+        } else if (blockID == (byte)BlockType.Sand) {
+            return new Vector2(3, 2);
         }
 
         //default value - light gray log (to know if it ever reaches this edge case for debugging)

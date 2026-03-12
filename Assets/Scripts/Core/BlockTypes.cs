@@ -4,7 +4,11 @@ public enum BlockType : byte {
     Air = 0,
     Dirt = 1,
     Stone = 2,
-    Grass = 3
+    Grass = 3,
+    Planks = 4,
+    Bricks = 5,
+    StoneBricks = 6,
+    Sand = 7
 }
 
 //on enum you can explicitly write the actual value of the item (default is int, here we changed to byte) , unity automatically does this but its good to write it now explicit

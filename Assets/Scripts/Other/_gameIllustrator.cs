@@ -52,6 +52,11 @@ public class _gameIllustrator : MonoBehaviour
 
     public void BtnExitToMenu() {
         _manager.ResumeGame(); // so we are not frozen in time
+
+        //unlock cursor
+        Cursor.lockState = CursorLockMode.None;
+        Cursor.visible = true;
+
         SceneManager.LoadScene("Title Screen");
     }
 }
