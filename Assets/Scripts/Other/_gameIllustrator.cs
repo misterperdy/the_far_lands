@@ -73,6 +73,7 @@ public class _gameIllustrator : MonoBehaviour
     public void BtnResume() {
         if (_manager != null) {
             pauseMenuUI.SetActive(false);
+            gameUI.SetActive(true);
             _manager.ResumeGame();
         }
     }
