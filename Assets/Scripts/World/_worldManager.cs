@@ -16,11 +16,14 @@ public class _worldManager : MonoBehaviour {
     [Header("World Generator Settings")]
     public int seed;
     public bool useRandomSeed = true;
-
     [HideInInspector] public float offsetX; // offsets for perln noiuse map
     [HideInInspector] public float offsetZ;
 
     public int worldSizeInChunks = 10; // it will generate a grid of 10x10
+
+    //spawning variables/timer
+    private bool isPlayerSpawned = false;
+    private float spawnCheckTimer = 0.5f;
 
     // **OLD**
     //MAP OF CHUNKS - basically the world storage map
@@ -40,6 +43,8 @@ public class _worldManager : MonoBehaviour {
     //waiting queue for loading chunk tasks
     private Queue<Vector3Int> chunksToLoadQueue = new Queue<Vector3Int> ();
 
+    CharacterController _playerCharController;
+
     private void Start() {
 
         if (useRandomSeed) {
@@ -55,8 +60,13 @@ public class _worldManager : MonoBehaviour {
 
         //init pool
         int poolSize = (renderDistance * 2 + 1) * (renderDistance * 2 + 1) + renderDistance; //render distance squiared + render distance safety padding 
-        
-        for(int i = 0; i < poolSize; i++) {
+
+        _playerCharController = playerTransform.GetComponent<CharacterController>();
+        if (_playerCharController != null) {
+            _playerCharController.enabled = false; //freeze player until chunks generated
+        }
+
+        for (int i = 0; i < poolSize; i++) {
             GameObject newChunkObj = Instantiate(chunkPrefab, Vector3.zero, Quaternion.identity);
             newChunkObj.SetActive(false);
 
@@ -69,6 +79,16 @@ public class _worldManager : MonoBehaviour {
     }
 
     private void Update() {
+        //spawning player logic
+        if (!isPlayerSpawned) {
+            spawnCheckTimer -= Time.deltaTime;
+
+            if (spawnCheckTimer <= 0f) {
+                CheckSpawn(); //try to see if chunks loaded and can spawn
+                spawnCheckTimer = 0.5f; //if not, load the timer again
+            }
+        }
+
         //generate 1 chunk per frame for loading queue to avoid lag spikes
         if (chunksToLoadQueue.Count > 0) {
             Vector3Int nextChunkCoord = chunksToLoadQueue.Dequeue();
@@ -86,6 +106,31 @@ public class _worldManager : MonoBehaviour {
             //look around to inspect new (or saved) chunks to be drawn
             UpdateChunksAroundPlayer();
             chunkUpdateTimer = chunkUpdateInterval;
+        }
+    }
+
+    //check to see if 0,y,0 is generated and spawn the player
+    private void CheckSpawn() {
+        //if middle chunk is generated
+        if (activeChunks.ContainsKey(Vector3Int.zero)) {
+            int spawnY = VoxelData.ChunkHeight - 1;
+
+            //FIND OUT WHAT IS THE highest terrain point, go down until its no longer air
+            while(GetVoxelGlobal(new Vector3Int(0, spawnY, 0))==0 && spawnY > 0) {
+                spawnY--;
+            }
+
+            //move player and unfreze
+            playerTransform.position = new Vector3(0, spawnY + 2.5f, 0);
+
+            if(_playerCharController != null) {
+                _playerCharController.enabled = true;
+            }
+
+            isPlayerSpawned = true;
+            Debug.Log("chunk found, player spawned");
+        } else {
+            Debug.Log("chunk not found, can't spawn player yet");
         }
     }
 
