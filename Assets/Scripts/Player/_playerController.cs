@@ -24,6 +24,7 @@ public class _playerController : MonoBehaviour
 
     private _worldManager _world;
     private CharacterController _controller;
+    private _gameManager _manager;
 
     private Vector3 velocity;
     private Vector3 currentMoveVelocity;
@@ -31,6 +32,7 @@ public class _playerController : MonoBehaviour
     private void Start() {
         _controller = GetComponent<CharacterController>();
         _world = FindObjectOfType<_worldManager>();
+        _manager = FindObjectOfType<_gameManager>();
 
         //lock cursor in middle
         Cursor.lockState = CursorLockMode.Locked;
@@ -38,6 +40,14 @@ public class _playerController : MonoBehaviour
     }
 
     private void Update() {
+        //if game is paused, player should not update anything
+        if(_manager != null) {
+            if (_manager.isPaused) {
+                return;
+            }
+        }
+
+        //not paused, update everything
         HandleMouseLook();
         HandleMovement();
         HandleInteraction();
