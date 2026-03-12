@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using UnityEngine.UI;
 
 public class _gameIllustrator : MonoBehaviour
 {
@@ -9,6 +10,11 @@ public class _gameIllustrator : MonoBehaviour
 
     public GameObject pauseMenuUI;
     public GameObject gameUI; // hide crosshair
+
+    [Header("Hotbar UI")]
+    public _playerInventory _inventoryScript;
+    public RawImage[] hotbarSlotImages = new RawImage[9]; //set effective blocks in hotbar
+    public GameObject[] hotbarSlotHighlights = new GameObject[9]; // enable current slot, hide on others
 
     void Start()
     {
@@ -35,6 +41,31 @@ public class _gameIllustrator : MonoBehaviour
                     _manager.PauseGame();
                 }
             }
+        }
+
+        //update hotbar
+        UpdateHotbarUI();
+    }
+
+    //function to set the hotbar correctly based on inventory information
+    public void UpdateHotbarUI() {
+        for(int i = 0; i < 9; i++) {
+            byte blockInSlot = _inventoryScript.hotbar[i];
+
+            //if its air hide rawimage
+            if(blockInSlot == 0) {
+                hotbarSlotImages[i].enabled = false;
+            } else {
+                //show block
+                hotbarSlotImages[i].enabled = true;
+
+                Vector2 texturePos = VoxelData.GetTexturePosition(blockInSlot);
+
+                float size = VoxelData.NormalizedBlockTextureSize;
+                hotbarSlotImages[i].uvRect = new Rect(texturePos.x * size, texturePos.y * size, size, size);
+            }
+
+            hotbarSlotHighlights[i].SetActive(i == _inventoryScript.currentSlotIndex);//activate current slot border, hide rest of them
         }
     }
 
