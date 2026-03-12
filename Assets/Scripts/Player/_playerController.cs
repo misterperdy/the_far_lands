@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using UnityEngine;
 
 [RequireComponent(typeof(CharacterController))]
@@ -25,6 +26,7 @@ public class _playerController : MonoBehaviour
     private _worldManager _world;
     private CharacterController _controller;
     private _gameManager _manager;
+    private _playerInventory _inventoryScript;
 
     private Vector3 velocity;
     private Vector3 currentMoveVelocity;
@@ -33,6 +35,7 @@ public class _playerController : MonoBehaviour
         _controller = GetComponent<CharacterController>();
         _world = FindObjectOfType<_worldManager>();
         _manager = FindObjectOfType<_gameManager>();
+        _inventoryScript = GetComponent<_playerInventory>();
 
         //lock cursor in middle
         Cursor.lockState = CursorLockMode.Locked;
@@ -150,8 +153,13 @@ public class _playerController : MonoBehaviour
                 //check if they overlap
                 if (!playerBounds.Intersects(blockBonds)) {
                     //place block if they dont
+                    byte selectedBlock = (byte)BlockType.Air; //default have air selected
 
-                    _world.SetVoxelGlobal(placeCoord, (byte)BlockType.Stone); // place stone for now
+                    if (_inventoryScript != null) {
+                        selectedBlock = _inventoryScript.hotbar[_inventoryScript.currentSlotIndex];
+                    }
+
+                    _world.SetVoxelGlobal(placeCoord, selectedBlock); // place block
                 } else {
                     Debug.Log("overlap player");
                 }
