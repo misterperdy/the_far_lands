@@ -157,6 +157,8 @@ public class Chunk : MonoBehaviour
         //if it's grass side block, don't apply this logic, it will mess it up, but for every other block do it
         if (blockID == (byte)BlockType.Grass && faceIndex != 2 && faceIndex != 3) {
             //don't rotate anything
+        } else if (blockID == (byte)BlockType.Planks || blockID == (byte)BlockType.Bricks || blockID == (byte)BlockType.StoneBricks ) {
+            //dont rotate these blocks
         } else {
             //pseudo random number based on coordinates
             int hash = Mathf.Abs(pos.x * 123 + pos.y * 456 + pos.z * 789);
