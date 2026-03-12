@@ -1170,6 +1170,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   hotbar: 000000000000000000
   currentSlotIndex: 0
+  _illustrator: {fileID: 1993332513}
 --- !u!1 &657298079
 GameObject:
   m_ObjectHideFlags: 0

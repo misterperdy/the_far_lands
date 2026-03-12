@@ -43,8 +43,8 @@ public class _gameIllustrator : MonoBehaviour
             }
         }
 
-        //update hotbar
-        UpdateHotbarUI();
+        //update hotbar no longer in update, call it everytime hotbar changes
+        //UpdateHotbarUI();
     }
 
     //function to set the hotbar correctly based on inventory information

@@ -8,12 +8,22 @@ public class _playerInventory : MonoBehaviour
 
     public int currentSlotIndex = 0; //start with slot 0 (0->8)
 
+    public _gameIllustrator _illustrator; // assign illustrator and call its UI update function every time hotbar changes
+
     private void Start() {
         //hardcode some blocks in hotbar
         hotbar[0] = (byte)BlockType.Stone;
         hotbar[1] = (byte)BlockType.Dirt;
         hotbar[2] = (byte)BlockType.Grass;
         hotbar[3] = (byte)BlockType.Planks;
+        hotbar[4] = (byte)BlockType.Bricks;
+        hotbar[5] = (byte)BlockType.StoneBricks;
+        hotbar[6] = (byte)BlockType.Sand;
+
+        //update hotbar
+        if (_illustrator != null) {
+            _illustrator.UpdateHotbarUI();
+        }
     }
 
     private void Update() {
@@ -22,6 +32,11 @@ public class _playerInventory : MonoBehaviour
             if(Input.GetKeyDown(KeyCode.Alpha1 + i)) {
                 currentSlotIndex = i;
                 Debug.Log("changed slot to " + ((BlockType)hotbar[currentSlotIndex]).ToString());
+
+                //update hotbar
+                if (_illustrator != null) {
+                    _illustrator.UpdateHotbarUI();
+                }
             }
         }
 
@@ -31,10 +46,24 @@ public class _playerInventory : MonoBehaviour
             currentSlotIndex--;
             if (currentSlotIndex < 0) currentSlotIndex = 8; // loop
             Debug.Log("changed slot to " + ((BlockType)hotbar[currentSlotIndex]).ToString());
-        }else if (scroll < 0) {
+
+
+            //update hotbar
+            if (_illustrator != null) {
+                _illustrator.UpdateHotbarUI();
+            }
+
+        } else if (scroll < 0) {
             currentSlotIndex++;
             if (currentSlotIndex > 8) currentSlotIndex = 0;// loop
             Debug.Log("changed slot to " + ((BlockType)hotbar[currentSlotIndex]).ToString());
+
+
+            //update hotbar
+            if (_illustrator != null) {
+                _illustrator.UpdateHotbarUI();
+            }
+
         }
     }
 
