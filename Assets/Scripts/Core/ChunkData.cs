@@ -12,6 +12,9 @@ public class ChunkData
 
     private _worldManager _world; //reference passed with dependency injection in constructor from Chunk script
 
+    [Header("Foliage Settings")]
+    float grassChance = 0.15f; // 15%
+
     public ChunkData(_worldManager _world) {
         //constructor, initialize the chunk's blocks 1d array
         voxelMap = new byte[VoxelData.ChunkVolume]; // length of 1d array = total volume of chunk
@@ -44,10 +47,18 @@ public class ChunkData
 
                     if (y == terrainHeight) { //top block  is grass
                         voxelMap[index] = (byte)BlockType.Grass;
-                    } else if (y < terrainHeight & y > terrainHeight - 5) { // next 4 blocks are dirt
+                    } else if (y < terrainHeight && y > terrainHeight - 5) { // next 4 blocks are dirt
                         voxelMap[index] = (byte)BlockType.Dirt;
                     } else if (y <= terrainHeight - 5) { // rest below is stone
                         voxelMap[index] = (byte)BlockType.Stone;
+                    } else if (y == terrainHeight + 1) { //sometimes add TALL GRASS
+                        float randomChance = UnityEngine.Random.value;
+
+                        if(randomChance < grassChance) {
+                            voxelMap[index] = (byte)BlockType.TallGrass;
+                        } else {
+                            voxelMap[index] = (byte)BlockType.Air;
+                        }
                     } else { // what is above will be air
                         voxelMap[index] = (byte)BlockType.Air;
                     }
