@@ -3,6 +3,7 @@
 // this script will hold the information for one chunk
 
 using System;
+using System.Xml.Schema;
 using UnityEngine;
 
 public class ChunkData
@@ -14,6 +15,7 @@ public class ChunkData
 
     [Header("Foliage Settings")]
     float grassChance = 0.15f; // 15%
+    float treeChance = 0.015f; //1,5%
 
     public ChunkData(_worldManager _world) {
         //constructor, initialize the chunk's blocks 1d array
@@ -61,6 +63,29 @@ public class ChunkData
                         }
                     } else { // what is above will be air
                         voxelMap[index] = (byte)BlockType.Air;
+                    }
+                }
+            }
+        }
+
+        //check chunk again to add trees
+        for(int x=2;x<VoxelData.ChunkWidth-2;x++) {
+            for(int z = 2; z < VoxelData.ChunkDepth - 2; z++) {
+
+                //check where is the grass
+                int surfaceY = 0;
+                for(int y = VoxelData.ChunkHeight - 1; y > 0; y--) {
+                    int index = VoxelData.Get1DIndex(x, y, z);
+                    if (voxelMap[index] == (byte)BlockType.Grass) {
+                        surfaceY = y;
+                        break;
+                    }
+                }
+
+                //if 
+                if(surfaceY > 0) {
+                    if (UnityEngine.Random.value < treeChance) {
+                        GenerateTree(x, surfaceY + 1, z);
                     }
                 }
             }
@@ -117,5 +142,53 @@ public class ChunkData
     public void SetVoxel(int x,int y, int z, byte blockID) {
         int index = VoxelData.Get1DIndex(x, y, z);
         voxelMap[index] = blockID;
+    }
+
+    // ** "CODE PREFABS" - structures
+
+    //tree
+    private void GenerateTree(int baseX, int baseY, int baseZ) {
+        int trunkHeight = UnityEngine.Random.Range(4, 7); //trhunk height
+
+        //generate trunk
+        for (int i = 0; i < trunkHeight; i++) {
+            if (baseY + i >= VoxelData.ChunkHeight) break; //check to not go over Y world limit
+
+            //set to wood
+            int index = VoxelData.Get1DIndex(baseX, baseY + i, baseZ);
+            voxelMap[index] = (byte)BlockType.Wood;
+        }
+
+        //generate leaves
+        int leafRadius = 2;
+        int leavesStart = baseY + trunkHeight - 2;
+        int leavesEnd = baseY + trunkHeight + 1;
+
+        for (int y = leavesStart; y <= leavesEnd; y++) {
+            //as we go up make the radius smaller
+            int currentRadius = (y == leavesEnd) ? leafRadius - 1 : leafRadius;
+
+            for (int x = -currentRadius; x <= currentRadius; x++) {
+                for (int z = -currentRadius; z <= currentRadius; z++) {
+                    int targetX = baseX + x;
+                    int targetZ = baseZ + z;
+
+                    //cut corners so its not a cube
+                    if (Mathf.Abs(x) == currentRadius && Mathf.Abs(z) == currentRadius && UnityEngine.Random.value > 0.5f) {
+                        continue;
+                    }
+
+                    //check to not exit chunk
+                    if(targetX >= 0 && targetX < VoxelData.ChunkWidth &&  targetZ >= 0 && targetZ < VoxelData.ChunkDepth && y < VoxelData.ChunkHeight) {
+                        int index = VoxelData.Get1DIndex(targetX, y, targetZ);
+
+                        //if its not trunk place leaves
+                        if (voxelMap[index] != (byte)BlockType.Wood) {
+                            voxelMap[index] = (byte)BlockType.Leaves;
+                        }
+                    }
+                }
+            }
+        }
     }
 }

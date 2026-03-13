@@ -330,6 +330,9 @@ public class _worldManager : MonoBehaviour {
 
     //function that takes coordinates and looks in chunksdata dictionary->chunk's array to find the exact block at those coordinates
     public byte GetVoxelGlobal(Vector3Int globalPos) {
+        //vertical protection
+        if (globalPos.y < 0 || globalPos.y >= VoxelData.ChunkHeight) return (byte)BlockType.Air;
+
         //find the chunk, floorToInt used to make sure negative numbers round correctly
         int chunkX = Mathf.FloorToInt((float)globalPos.x / VoxelData.ChunkWidth);
         int chunkZ = Mathf.FloorToInt((float)globalPos.z / VoxelData.ChunkDepth);
@@ -355,6 +358,9 @@ public class _worldManager : MonoBehaviour {
 
     //function that takes coordinates & block id and looks in chunksdata dictionary->chunk's array to find the exact block at those coordinates and replace it with blockID
     public void SetVoxelGlobal(Vector3Int globalPos, byte blockID) {
+        //prevent out of bounds veritcal
+        if (globalPos.y < 0 || globalPos.y >= VoxelData.ChunkHeight) return;
+
         //find the chunk, floorToInt used to make sure negative numbers round correctly
         int chunkX = Mathf.FloorToInt((float)globalPos.x / VoxelData.ChunkWidth);
         int chunkZ = Mathf.FloorToInt((float)globalPos.z / VoxelData.ChunkDepth);
