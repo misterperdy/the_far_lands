@@ -140,6 +140,17 @@ public class _playerController : MonoBehaviour
                 //only break if it is not bedrock
                 if(_world.GetVoxelGlobal(breakCoord) != (byte)BlockType.Bedrock) {
                     _world.SetVoxelGlobal(breakCoord, (byte)BlockType.Air); // we replace block with air
+                    
+                    //check if foilage above break it also
+                    Vector3Int blockAboveCoord = new Vector3Int(breakCoord.x, breakCoord.y + 1, breakCoord.z);
+
+                    byte blockAboveID = _world.GetVoxelGlobal(blockAboveCoord);
+
+                    //if its cross model break it
+                    if (VoxelData.IsCrossModel(blockAboveID)) {
+                        _world.SetVoxelGlobal(blockAboveCoord, (byte)BlockType.Air);
+                    }
+
                     interactionTimer = interactionDelay; // init the timer for hold to break
                 }
             }
