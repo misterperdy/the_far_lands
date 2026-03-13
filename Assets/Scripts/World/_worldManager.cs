@@ -19,16 +19,14 @@ public class _worldManager : MonoBehaviour {
     [HideInInspector] public float offsetX; // offsets for perln noiuse map
     [HideInInspector] public float offsetZ;
 
-    public int worldSizeInChunks = 10; // it will generate a grid of 10x10
+    [Header("Random Tick System")]
+    public float tickInterval = 0.05f; //20 tps
+    public int randomTicksPerChunk = 24; //how many blocks to check per chunk to update
+    private float tickTimer = 0f; // internal timer
 
     //spawning variables/timer
     private bool isPlayerSpawned = false;
     private float spawnCheckTimer = 0.5f;
-
-    // **OLD**
-    //MAP OF CHUNKS - basically the world storage map
-    //dictionary of key-Coordinate:value-chunk data for instant access
-    //public Dictionary<Vector3Int, Chunk> chunks = new Dictionary<Vector3Int, Chunk>();
 
     // 2 dictionaries, one for CHUNKDATA for actual content of every chunk - all of it instantiated and present on runtime
     private Dictionary<Vector3Int, ChunkData> worldData = new Dictionary<Vector3Int, ChunkData> (); 
@@ -44,6 +42,14 @@ public class _worldManager : MonoBehaviour {
     private Queue<Vector3Int> chunksToLoadQueue = new Queue<Vector3Int> ();
 
     CharacterController _playerCharController;
+
+    // **OLD UNUSED VARIABLES**
+
+    //MAP OF CHUNKS - basically the world storage map
+    //dictionary of key-Coordinate:value-chunk data for instant access
+    //public Dictionary<Vector3Int, Chunk> chunks = new Dictionary<Vector3Int, Chunk>();
+
+    //public int worldSizeInChunks = 10; // it will generate a grid of 10x10 - no longer used we have infinite worlds now
 
     private void Start() {
 
@@ -106,6 +112,85 @@ public class _worldManager : MonoBehaviour {
             //look around to inspect new (or saved) chunks to be drawn
             UpdateChunksAroundPlayer();
             chunkUpdateTimer = chunkUpdateInterval;
+        }
+
+        //internal clock to check chunk update ticks
+        tickTimer += Time.deltaTime;
+
+        if(tickTimer >= tickInterval) {
+            tickTimer = 0f;
+            ProcessRandomTicks();
+        }
+    }
+
+    //pick a few blocks per chunk to update every time function hits - right now used for dirt-grass conversion
+    private void ProcessRandomTicks() {
+        //only go through active chunks
+        foreach (Chunk chunk in activeChunks.Values) {
+
+            //pick random blocks
+            for (int i = 0; i < randomTicksPerChunk; i++) {
+
+                //Grass-Dirt-Grass conversion logic:
+
+                //local random coords
+                int x = Random.Range(0, VoxelData.ChunkWidth);
+                int y = Random.Range(0, VoxelData.ChunkHeight);
+                int z = Random.Range(0, VoxelData.ChunkDepth);
+
+                //get block
+                byte blockID = chunk.GetVoxelFromChunkData(x, y, z);
+
+                //grass -> dirt conversion when its obstructed
+                if (blockID == (byte)BlockType.Grass) {
+                    byte blockAbove = chunk.GetVoxelFromChunkData(x, y + 1, z);
+
+                    //if its not air and its not transparent turn grass to dirt
+                    if (blockAbove != (byte)BlockType.Air && !VoxelData.IsTransparent(blockAbove)) {
+                        chunk.SetVoxelToChunkData(x, y, z, (byte)BlockType.Dirt);
+                        chunk.GenerateMesh(); // regenerate mesh
+                    }
+
+                }//else if its dirt and next to grass, turn it into grass spread
+                else if (blockID == (byte)BlockType.Dirt) {
+                    byte blockAbove = chunk.GetVoxelFromChunkData(x, y + 1, z);
+
+                    //make sure its air/transparent
+                    if (blockAbove == (byte)BlockType.Air || VoxelData.IsTransparent(blockAbove)) {
+
+                        //pick random neighbour
+                        int randomOffsetX = Random.Range(-1, 2);
+                        int randomOffsetY = Random.Range(-1, 2);
+                        int randomOffsetZ = Random.Range(-1, 2);
+
+                        //check its local coordinate
+                        int checkX = x + randomOffsetX;
+                        int checkY = y + randomOffsetY;
+                        int checkZ = z + randomOffsetZ;
+
+                        byte neighbourID;
+
+                        //if its inside this chunk
+                        if(checkX >= 0 && checkX < VoxelData.ChunkWidth && checkY >= 0 && checkY < VoxelData.ChunkHeight && checkZ >= 0 && checkZ < VoxelData.ChunkDepth) {
+                            //grab from chunk data
+                            neighbourID = chunk.GetVoxelFromChunkData(checkX, checkY, checkZ);
+                        } else {
+                            //grab from entire world
+                            neighbourID = GetVoxelGlobal(new Vector3Int(
+                                checkX + (chunk.chunkCoord.x * VoxelData.ChunkWidth),
+                                checkY,
+                                checkZ + (chunk.chunkCoord.z * VoxelData.ChunkDepth)));
+                        }
+
+                        //check if neighbour is grass
+                        if (neighbourID == (byte)BlockType.Grass) {
+                            //convert ourselves to grass
+                            chunk.SetVoxelToChunkData(x, y, z, (byte)BlockType.Grass);
+                            chunk.GenerateMesh(); // regenerate mesh
+                        }
+                    }
+                }
+            }
         }
     }
 
