@@ -196,7 +196,7 @@ public class Chunk : MonoBehaviour
         byte neighbourID = GetBlockAt(neighbourPos);
 
         //if neighbour is air, draw this block's face
-        if (neighbourID == (byte)BlockType.Air) return true;
+        if (neighbourID == (byte)BlockType.Air || VoxelData.IsCrossModel(neighbourID)) return true;
 
         bool currentIsTransparent = VoxelData.IsTransparent(blockID);
         bool neighbourIsTransparent = VoxelData.IsTransparent(neighbourID);
