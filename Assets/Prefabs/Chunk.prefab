@@ -12,6 +12,7 @@ GameObject:
   - component: {fileID: 1582994962409073412}
   - component: {fileID: 2578490940899535333}
   - component: {fileID: 5066666316800627182}
+  - component: {fileID: 1815918155332474192}
   m_Layer: 0
   m_Name: Chunk
   m_TagString: Untagged
@@ -63,6 +64,7 @@ MeshRenderer:
   m_RendererPriority: 0
   m_Materials:
   - {fileID: 2100000, guid: 84039fb38c422f94fbefe6a27859cdad, type: 2}
+  - {fileID: 2100000, guid: 21f1a6bad12ccee499477828ad189986, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -97,3 +99,25 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   chunkCoord: {x: 0, y: 0, z: 0}
+--- !u!64 &1815918155332474192
+MeshCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 808868321556646356}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 5
+  m_Convex: 0
+  m_CookingOptions: 30
+  m_Mesh: {fileID: 0}
