@@ -140,6 +140,7 @@ public class _playerController : MonoBehaviour
                 //only break if it is not bedrock
                 if(_world.GetVoxelGlobal(breakCoord) != (byte)BlockType.Bedrock) {
                     _world.SetVoxelGlobal(breakCoord, (byte)BlockType.Air); // we replace block with air
+                    _world.SpawnBlockParticles(breakCoord, _world.GetVoxelGlobal(breakCoord)); //spawn destruction particles
                     
                     //check if foilage above break it also
                     Vector3Int blockAboveCoord = new Vector3Int(breakCoord.x, breakCoord.y + 1, breakCoord.z);
@@ -149,6 +150,7 @@ public class _playerController : MonoBehaviour
                     //if its cross model break it
                     if (VoxelData.IsCrossModel(blockAboveID)) {
                         _world.SetVoxelGlobal(blockAboveCoord, (byte)BlockType.Air);
+                        _world.SpawnBlockParticles(blockAboveCoord, _world.GetVoxelGlobal(blockAboveCoord)); //spawn destruction particles
                     }
 
                     interactionTimer = interactionDelay; // init the timer for hold to break

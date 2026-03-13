@@ -2604,6 +2604,9 @@ MonoBehaviour:
   offsetZ: 0
   tickInterval: 0.05
   randomTicksPerChunk: 24
+  blockBreakPrefab: {fileID: 3020830551168979440, guid: 129e0337e3a7cb147ab4903fca4a820f,
+    type: 3}
+  atlasSize: 9
 --- !u!4 &1993332512
 Transform:
   m_ObjectHideFlags: 0

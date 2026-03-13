@@ -24,6 +24,10 @@ public class _worldManager : MonoBehaviour {
     public int randomTicksPerChunk = 24; //how many blocks to check per chunk to update
     private float tickTimer = 0f; // internal timer
 
+    [Header("Particle System")]
+    public ParticleSystem blockBreakPrefab;
+    public int atlasSize = 9;
+
     //spawning variables/timer
     private bool isPlayerSpawned = false;
     private float spawnCheckTimer = 0.5f;
@@ -411,5 +415,22 @@ public class _worldManager : MonoBehaviour {
         if(activeChunks.TryGetValue(coord, out Chunk neighbourChunk)) {
             neighbourChunk.GenerateMesh();
         }
+    }
+
+    //spawn break block aprticles from prefab the same texture of the block
+    public void SpawnBlockParticles(Vector3Int pos, byte blockID) {
+        Vector3 spawnPos = new Vector3(pos.x + 0.5f, pos.y + 0.5f, pos.z + 0.5f);
+        ParticleSystem fx = Instantiate(blockBreakPrefab, spawnPos, Quaternion.identity);
+
+        Vector2 texturePos = VoxelData.GetTexturePosition(blockID);//get block texture position from atlast
+
+        //convert to 1D
+        int frameIndex = (((atlasSize - 1) - (int)texturePos.y) * atlasSize) + (int)texturePos.x;
+
+        //apply to particles
+        var textureSheet = fx.textureSheetAnimation;
+        textureSheet.startFrame = frameIndex;
+
+        fx.Play();
     }
 }
