@@ -8,7 +8,9 @@ public enum BlockType : byte {
     Planks = 4,
     Bricks = 5,
     StoneBricks = 6,
-    Sand = 7
+    Sand = 7,
+    Glass = 8,
+    Bedrock = 9
 }
 
 //on enum you can explicitly write the actual value of the item (default is int, here we changed to byte) , unity automatically does this but its good to write it now explicit

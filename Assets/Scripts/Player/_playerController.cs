@@ -136,8 +136,12 @@ public class _playerController : MonoBehaviour
 
             //break block logic
             if (Input.GetMouseButtonDown(0) || (Input.GetMouseButton(0) && interactionTimer<=0f)) {
-                _world.SetVoxelGlobal(breakCoord, (byte)BlockType.Air); // we replace block with air
-                interactionTimer = interactionDelay; // init the timer for hold to break
+
+                //only break if it is not bedrock
+                if(_world.GetVoxelGlobal(breakCoord) != (byte)BlockType.Bedrock) {
+                    _world.SetVoxelGlobal(breakCoord, (byte)BlockType.Air); // we replace block with air
+                    interactionTimer = interactionDelay; // init the timer for hold to break
+                }
             }
 
             //place block logic

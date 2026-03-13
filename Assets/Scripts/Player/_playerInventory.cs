@@ -19,6 +19,7 @@ public class _playerInventory : MonoBehaviour
         hotbar[4] = (byte)BlockType.Bricks;
         hotbar[5] = (byte)BlockType.StoneBricks;
         hotbar[6] = (byte)BlockType.Sand;
+        hotbar[7] = (byte)BlockType.Glass;
 
         //update hotbar
         if (_illustrator != null) {

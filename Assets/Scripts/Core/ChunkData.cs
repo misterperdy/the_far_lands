@@ -34,9 +34,13 @@ public class ChunkData
                 //round/multiply to actual terrain height
                 int terrainHeight = Mathf.RoundToInt(noiseValue * VoxelData.TerrainHeightMultiplier) + VoxelData.TerrainSolidGroundHeight;
 
-                //fill with blocks
-                for (int y = 0; y < VoxelData.ChunkHeight; y++) {
-                    int index = VoxelData.Get1DIndex(x, y, z);
+                //set Y=0 to bedrock
+                int index = VoxelData.Get1DIndex(x, 0, z);
+                voxelMap[index] = (byte)BlockType.Bedrock;
+
+                //fill with blocks from y=1
+                for (int y = 1; y < VoxelData.ChunkHeight; y++) {
+                    index = VoxelData.Get1DIndex(x, y, z);
 
                     if (y == terrainHeight) { //top block  is grass
                         voxelMap[index] = (byte)BlockType.Grass;

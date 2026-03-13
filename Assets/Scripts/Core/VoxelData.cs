@@ -87,8 +87,10 @@ public static class VoxelData
     public static Vector2 GetTexturePosition(byte blockID, int faceIndex = 0) { //default face 0 for UI
         if (blockID == (byte)BlockType.Stone) {
             return new Vector2(3, 4);
+
         } else if (blockID == (byte)BlockType.Dirt) {
             return new Vector2(7, 3);
+
         } else if (blockID == (byte)BlockType.Grass) {
             //based on which face it is, show top grass block or side grass block or dirt (bottom)
             if (faceIndex == 2) { // top
@@ -99,14 +101,25 @@ public static class VoxelData
             } else { //3d sides
                 return new Vector2(7, 4);
             }
+
         } else if (blockID == (byte)BlockType.Planks) {
             return new Vector2(0, 8);
+
         } else if (blockID == (byte)BlockType.Bricks) {
             return new Vector2(8, 5);
+
         } else if (blockID == (byte)BlockType.StoneBricks) {
             return new Vector2(4, 6);
+
         } else if (blockID == (byte)BlockType.Sand) {
             return new Vector2(3, 2);
+
+        } else if (blockID == (byte)BlockType.Glass) {
+            return new Vector2(6, 0);
+
+        } else if (blockID == (byte)BlockType.Bedrock) {
+            return new Vector2(5, 1);
+
         }
 
         //default value - light gray log (to know if it ever reaches this edge case for debugging)
