@@ -12,11 +12,11 @@ public class _playerInventory : MonoBehaviour
 
     private void Start() {
         //hardcode some blocks in hotbar
-        hotbar[0] = (byte)BlockType.Stone;
-        hotbar[1] = (byte)BlockType.Dirt;
-        hotbar[2] = (byte)BlockType.Grass;
-        hotbar[3] = (byte)BlockType.Planks;
-        hotbar[4] = (byte)BlockType.Bricks;
+        hotbar[0] = (byte)BlockType.Leaves;
+        hotbar[1] = (byte)BlockType.Wood;
+        hotbar[2] = (byte)BlockType.TallGrass;
+        hotbar[3] = (byte)BlockType.BrownMushroom;
+        hotbar[4] = (byte)BlockType.RedMushroom;
         hotbar[5] = (byte)BlockType.StoneBricks;
         hotbar[6] = (byte)BlockType.Sand;
         hotbar[7] = (byte)BlockType.Glass;

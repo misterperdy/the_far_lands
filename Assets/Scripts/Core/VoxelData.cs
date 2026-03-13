@@ -120,15 +120,41 @@ public static class VoxelData
         } else if (blockID == (byte)BlockType.Bedrock) {
             return new Vector2(5, 1);
 
+        } else if (blockID == (byte)BlockType.TallGrass) {
+            return new Vector2(6, 4);
+
+        } else if (blockID == (byte)BlockType.BrownMushroom) {
+            return new Vector2(4, 1);
+
+        } else if (blockID == (byte)BlockType.RedMushroom) {
+            return new Vector2(4, 2);
+
+        } else if (blockID == (byte)BlockType.Leaves) {
+            return new Vector2(4, 0);
+
+        } else if (blockID == (byte)BlockType.Wood) {
+            //based on which face it is, show top/bottom middle of log trunk or sides exterior of trunk
+            if (faceIndex == 2 || faceIndex == 3) { // top/bottom
+                return new Vector2(0, 1); //trunk center
+            } else {  //other faces
+                return new Vector2(1,8); //log side
+            }
+
         }
 
-        //default value - light gray log (to know if it ever reaches this edge case for debugging)
+        //default value - error block
         return new Vector2(0, 0);
     }
 
-    //fucntion to check if block is transparent(air,glass) - we will add water, lava, and blocks like leaves mushrooms here
+    //fucntion to check if block is transparent
     public static bool IsTransparent(byte blockID) {
-        if (blockID == (byte)BlockType.Air || blockID == (byte)BlockType.Glass) return true;
+        if (blockID == (byte)BlockType.Air || blockID == (byte)BlockType.Glass || blockID == (byte)BlockType.Leaves || IsCrossModel(blockID)) return true;
+        return false;
+    }
+
+    //function to check if block should be drawn in X-shape (foilage)
+    public static bool IsCrossModel(byte blockID) {
+        if (blockID == (byte)BlockType.TallGrass || blockID == (byte)BlockType.RedMushroom || blockID == (byte)BlockType.BrownMushroom) return true;
         return false;
     }
 

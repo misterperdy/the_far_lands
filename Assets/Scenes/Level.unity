@@ -830,7 +830,7 @@ Light:
   m_InnerSpotAngle: 21.80208
   m_CookieSize: 10
   m_Shadows:
-    m_Type: 2
+    m_Type: 1
     m_Resolution: -1
     m_CustomResolution: -1
     m_Strength: 1
@@ -2602,7 +2602,8 @@ MonoBehaviour:
   useRandomSeed: 1
   offsetX: 0
   offsetZ: 0
-  worldSizeInChunks: 10
+  tickInterval: 0.05
+  randomTicksPerChunk: 24
 --- !u!4 &1993332512
 Transform:
   m_ObjectHideFlags: 0

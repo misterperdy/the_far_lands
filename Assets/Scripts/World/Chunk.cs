@@ -80,6 +80,12 @@ public class Chunk : MonoBehaviour
 
     //add to mesh required/to be drawn faces for this block
     private void UpdateMeshData(Vector3Int pos, byte blockID) {
+        //if cross model use cross logic
+        if (VoxelData.IsCrossModel(blockID)) {
+            DrawCrossModel(pos, blockID);
+            return;
+        }
+
         bool isTransparent = VoxelData.IsTransparent(blockID);
 
         //check each direction to see if its air next to it
@@ -130,6 +136,42 @@ public class Chunk : MonoBehaviour
         }
     }
 
+    //add cross vertices for foilage
+    private void DrawCrossModel(Vector3Int pos, byte blockID) {
+        //we need to draw 4 faces to see it from every angle
+
+        //draw the 2 diagonals in both forward and backward order
+        AddCrossFace(pos, blockID, new Vector3(0, 0, 0), new Vector3(1, 0, 1), new Vector3(1, 1, 1), new Vector3(0, 1, 0)); //diag 1 front
+        //diag 1 backward
+        AddCrossFace(pos, blockID, new Vector3(1, 0, 1), new Vector3(0, 0, 0), new Vector3(0, 1, 0), new Vector3(1, 1, 1));
+
+        //diag 2
+        AddCrossFace(pos, blockID, new Vector3(0, 0, 1), new Vector3(1, 0, 0), new Vector3(1, 1, 0), new Vector3(0, 1, 1)); //forward
+        AddCrossFace(pos, blockID, new Vector3(1, 0, 0), new Vector3(0, 0, 1), new Vector3(0, 1, 1), new Vector3(1, 1, 0)); //backward
+
+    }
+
+    //helper function for above
+    private void AddCrossFace(Vector3Int pos, byte blockID, Vector3 v1, Vector3 v2, Vector3 v3, Vector3 v4) {
+        vertices.Add(pos + v1);
+        vertices.Add(pos + v2);
+        vertices.Add(pos + v3);
+        vertices.Add(pos + v4);
+
+        AddTexture(blockID, 0, pos);
+
+        //go to trnasparent submesh
+        transparentTriangles.Add(vertexIndex);
+        transparentTriangles.Add(vertexIndex + 1);
+        transparentTriangles.Add(vertexIndex + 2);
+
+        transparentTriangles.Add(vertexIndex + 0);
+        transparentTriangles.Add(vertexIndex + 2);
+        transparentTriangles.Add(vertexIndex + 3);
+
+        vertexIndex += 4;
+    }
+
     //new check block function for culling
     //logic is as following:
         //if we are opaque and neighbour is transparent, draw ourselves
@@ -150,7 +192,11 @@ public class Chunk : MonoBehaviour
         if (!currentIsTransparent && neighbourIsTransparent) return true;
 
         //if we are transparent and neighbour is the same, don't draw ourselves, for glass/water continuity
-        if (currentIsTransparent && neighbourID == blockID) return false;
+        if (currentIsTransparent && neighbourID == blockID) {
+            //otherwise dont draw
+            return false;
+        }
+        
 
         //rest of cases, opaque-opaque or glass with opaque neighbour, don't draw ourselves
         return false;
@@ -216,7 +262,7 @@ public class Chunk : MonoBehaviour
         //if it's grass side block, don't apply this logic, it will mess it up, but for every other block do it
         if (blockID == (byte)BlockType.Grass && faceIndex != 2 && faceIndex != 3) {
             //don't rotate anything
-        } else if (blockID == (byte)BlockType.Planks || blockID == (byte)BlockType.Bricks || blockID == (byte)BlockType.StoneBricks ) {
+        } else if (blockID == (byte)BlockType.Planks || blockID == (byte)BlockType.Bricks || blockID == (byte)BlockType.StoneBricks || blockID == (byte)BlockType.Wood || VoxelData.IsTransparent(blockID)) {
             //dont rotate these blocks
         } else {
             //pseudo random number based on coordinates
