@@ -13,10 +13,6 @@ public class ChunkData
 
     private _worldManager _world; //reference passed with dependency injection in constructor from Chunk script
 
-    [Header("Foliage Settings")]
-    float grassChance = 0.15f; // 15%
-    float treeChance = 0.015f; //1,5%
-
     public ChunkData(_worldManager _world) {
         //constructor, initialize the chunk's blocks 1d array
         voxelMap = new byte[VoxelData.ChunkVolume]; // length of 1d array = total volume of chunk
@@ -56,7 +52,7 @@ public class ChunkData
                     } else if (y == terrainHeight + 1) { //sometimes add TALL GRASS
                         float randomChance = UnityEngine.Random.value;
 
-                        if(randomChance < grassChance) {
+                        if(randomChance < VoxelData.grassChance) {
                             voxelMap[index] = (byte)BlockType.TallGrass;
                         } else {
                             voxelMap[index] = (byte)BlockType.Air;
@@ -84,7 +80,7 @@ public class ChunkData
 
                 //if 
                 if(surfaceY > 0) {
-                    if (UnityEngine.Random.value < treeChance) {
+                    if (UnityEngine.Random.value < VoxelData.treeChance) {
                         GenerateTree(x, surfaceY + 1, z);
                     }
                 }
@@ -174,9 +170,15 @@ public class ChunkData
                     int targetZ = baseZ + z;
 
                     //cut corners so its not a cube
-                    if (Mathf.Abs(x) == currentRadius && Mathf.Abs(z) == currentRadius && UnityEngine.Random.value > 0.5f) {
-                        continue;
+                    if (Mathf.Abs(x) == currentRadius && Mathf.Abs(z) == currentRadius ) {
+                        if(UnityEngine.Random.value > 0.5f) {
+                            continue;
+                        }
+                        if(y != leavesStart) {
+                            continue;
+                        }
                     }
+
 
                     //check to not exit chunk
                     if(targetX >= 0 && targetX < VoxelData.ChunkWidth &&  targetZ >= 0 && targetZ < VoxelData.ChunkDepth && y < VoxelData.ChunkHeight) {

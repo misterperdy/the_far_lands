@@ -130,7 +130,7 @@ public static class VoxelData
             return new Vector2(4, 2);
 
         } else if (blockID == (byte)BlockType.Leaves) {
-            return new Vector2(4, 0);
+            return new Vector2(8, 8); //4,0 was transparent one but looks weird
 
         } else if (blockID == (byte)BlockType.Wood) {
             //based on which face it is, show top/bottom middle of log trunk or sides exterior of trunk
@@ -171,4 +171,9 @@ public static class VoxelData
     public static readonly float TerrainNoiseScale = 0.05f; // zoom on noisemap ; smaller = smoother terrain ; larger = rougher terrain
     public static readonly int TerrainHeightMultiplier = 15; //how tall mountains will be
     public static readonly int TerrainSolidGroundHeight = 10; // base height of world
+
+    //foliage settings
+    [Header("Foliage Settings")]
+    public static readonly float grassChance = 0.15f; 
+    public static readonly float treeChance = 0.0025f; 
 }
