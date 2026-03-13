@@ -158,6 +158,15 @@ public static class VoxelData
         return false;
     }
 
+    //function to check solid blocks (not solid: tall grass etc you can pass through them - they don't add to the mesh collider of the world)
+    public static bool HasCollision(byte blockID) {
+        if (blockID == (byte)BlockType.Air || blockID == (byte)BlockType.TallGrass || blockID == (byte)BlockType.RedMushroom || blockID == (byte)BlockType.BrownMushroom) {
+            return false;
+        }
+
+        return true;
+    }
+
     // -------- Terrain Generation data --------
     public static readonly float TerrainNoiseScale = 0.05f; // zoom on noisemap ; smaller = smoother terrain ; larger = rougher terrain
     public static readonly int TerrainHeightMultiplier = 15; //how tall mountains will be

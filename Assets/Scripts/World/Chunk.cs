@@ -29,6 +29,8 @@ public class Chunk : MonoBehaviour
     private List<int> opaqueTriangles = new List<int>();
     private List<int> transparentTriangles = new List<int>();
 
+    private List<int> colliderTriangles = new List<int>(); // list for triangles WITH collsion
+
     //vertex count
     private int vertexIndex = 0;
 
@@ -57,6 +59,7 @@ public class Chunk : MonoBehaviour
         vertices.Clear();
         opaqueTriangles.Clear();
         transparentTriangles.Clear();
+        colliderTriangles.Clear();
         uvs.Clear();
         vertexIndex = 0;
 
@@ -129,9 +132,19 @@ public class Chunk : MonoBehaviour
                     opaqueTriangles.Add(vertexIndex + 3);
                 }
 
+                //if it has collision add to vertices colliders list
+                if (VoxelData.HasCollision(blockID)) {
+                    colliderTriangles.Add(vertexIndex);
+                    colliderTriangles.Add(vertexIndex + 1);
+                    colliderTriangles.Add(vertexIndex + 2);
 
-                    //move index 4 pozitions forwatd cause we used 4 vertices
-                    vertexIndex += 4;
+                    colliderTriangles.Add(vertexIndex + 0);
+                    colliderTriangles.Add(vertexIndex + 2);
+                    colliderTriangles.Add(vertexIndex + 3);
+                }
+
+                //move index 4 pozitions forwatd cause we used 4 vertices
+                vertexIndex += 4;
             }
         }
     }
@@ -299,8 +312,14 @@ public class Chunk : MonoBehaviour
         mesh.RecalculateNormals(); // for shadows and lights to shine correctly
 
         meshFilter.mesh = mesh; //send to gpu to render
+
+        //separate collisi0on mesh from our collision triangles
+        Mesh collisionMesh = new Mesh();
+        collisionMesh.SetVertices(vertices);
+        collisionMesh.SetTriangles(colliderTriangles, 0);
+
         meshCollider.sharedMesh = null; //to make sure to reset collider mesh when updating mesh
-        meshCollider.sharedMesh = mesh; //create collider of mesh shape, will create from both submeshes
+        meshCollider.sharedMesh = collisionMesh; //set collision mesh
     }
 
     //to keep chunkData private
