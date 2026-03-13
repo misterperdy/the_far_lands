@@ -126,6 +126,12 @@ public static class VoxelData
         return new Vector2(0, 0);
     }
 
+    //fucntion to check if block is transparent(air,glass) - we will add water, lava, and blocks like leaves mushrooms here
+    public static bool IsTransparent(byte blockID) {
+        if (blockID == (byte)BlockType.Air || blockID == (byte)BlockType.Glass) return true;
+        return false;
+    }
+
     // -------- Terrain Generation data --------
     public static readonly float TerrainNoiseScale = 0.05f; // zoom on noisemap ; smaller = smoother terrain ; larger = rougher terrain
     public static readonly int TerrainHeightMultiplier = 15; //how tall mountains will be

@@ -20,12 +20,14 @@ public class Chunk : MonoBehaviour
 
     private _worldManager _world;
 
-    //dynamic sized lists we will use to draw the mesh
+    //dynamic sized lists we will use to draw the mesh - USED BY ALL BLOCKS
     private List<Vector3> vertices = new List<Vector3>();
-    private List<int> triangles = new List<int>();
-
-    //UV list, UV coordinate for each vertex
+    //UV list, UV coordinate for each vertex FOR ALL BLOCKS
     private List<Vector2> uvs = new List<Vector2>();
+
+    //triangles SEPARATED for opaque blocks (mesh level 1) and translucent blocks(mesh level 2)
+    private List<int> opaqueTriangles = new List<int>();
+    private List<int> transparentTriangles = new List<int>();
 
     //vertex count
     private int vertexIndex = 0;
@@ -53,7 +55,8 @@ public class Chunk : MonoBehaviour
     public void GenerateMesh() {
         //CLEAR OLD MESH
         vertices.Clear();
-        triangles.Clear();
+        opaqueTriangles.Clear();
+        transparentTriangles.Clear();
         uvs.Clear();
         vertexIndex = 0;
 
@@ -77,10 +80,12 @@ public class Chunk : MonoBehaviour
 
     //add to mesh required/to be drawn faces for this block
     private void UpdateMeshData(Vector3Int pos, byte blockID) {
+        bool isTransparent = VoxelData.IsTransparent(blockID);
+
         //check each direction to see if its air next to it
         for (int i = 0; i < 6; i++) {
             //add offset from voxelData to block coords to check whats next to it
-            if (CheckAir(pos + VoxelData.faceChecks[i])) {
+            if (CheckDrawFace(blockID, pos + VoxelData.faceChecks[i])) {
 
                 //if check air test passes it means we need to draw this face
 
@@ -97,21 +102,75 @@ public class Chunk : MonoBehaviour
 
                 //unity will take the triangle info from here and effective points from vertices
                 //in triangles array from 3 in 3 will draw a triangle USING the element at triangles[value] index from vertices as a point.
-                triangles.Add(vertexIndex);
-                triangles.Add(vertexIndex + 1);
-                triangles.Add(vertexIndex + 2);
+                //first 3 - first tirangle, next 3 - secodn triangle, both combined will form the square to be drawn
 
-                //secodn triangle, both combined will form the square to be drawn
-                triangles.Add(vertexIndex + 0);
-                triangles.Add(vertexIndex + 2);
-                triangles.Add(vertexIndex + 3);
+                //ADD in corresponding list based on block transparency
+                if (isTransparent) {
+                    transparentTriangles.Add(vertexIndex);
+                    transparentTriangles.Add(vertexIndex + 1);
+                    transparentTriangles.Add(vertexIndex + 2);
 
-                //move index 4 pozitions forwatd cause we used 4 vertices
-                vertexIndex += 4;
+                    transparentTriangles.Add(vertexIndex + 0);
+                    transparentTriangles.Add(vertexIndex + 2);
+                    transparentTriangles.Add(vertexIndex + 3);
+                } else {
+                    opaqueTriangles.Add(vertexIndex);
+                    opaqueTriangles.Add(vertexIndex + 1);
+                    opaqueTriangles.Add(vertexIndex + 2);
+
+                    opaqueTriangles.Add(vertexIndex + 0);
+                    opaqueTriangles.Add(vertexIndex + 2);
+                    opaqueTriangles.Add(vertexIndex + 3);
+                }
+
+
+                    //move index 4 pozitions forwatd cause we used 4 vertices
+                    vertexIndex += 4;
             }
         }
     }
 
+    //new check block function for culling
+    //logic is as following:
+        //if we are opaque and neighbour is transparent, draw ourselves
+        //if we are transparent and neighbour is transparent, don't draw ourselves
+        //if we are transparent and neighbour is opaque, don't draw ourselves
+        //basically always yield priority to the opaque block, and when draw don't draw ourselves for continuity
+    private bool CheckDrawFace(byte blockID, Vector3Int neighbourPos) {
+
+        byte neighbourID = GetBlockAt(neighbourPos);
+
+        //if neighbour is air, draw this block's face
+        if (neighbourID == (byte)BlockType.Air) return true;
+
+        bool currentIsTransparent = VoxelData.IsTransparent(blockID);
+        bool neighbourIsTransparent = VoxelData.IsTransparent(neighbourID);
+
+        //if neighbour is transparent and we are not, always draw ourselves
+        if (!currentIsTransparent && neighbourIsTransparent) return true;
+
+        //if we are transparent and neighbour is the same, don't draw ourselves, for glass/water continuity
+        if (currentIsTransparent && neighbourID == blockID) return false;
+
+        //rest of cases, opaque-opaque or glass with opaque neighbour, don't draw ourselves
+        return false;
+    }
+
+    //helper function for grabbing neighbours blockID, if block requested is in chunk or if its in next chunk
+    private byte GetBlockAt(Vector3Int pos) {
+        //if we are outside of chunk grab him globally
+        if (pos.x < 0 || pos.x >= VoxelData.ChunkWidth || pos.y < 0 || pos.y >= VoxelData.ChunkHeight || pos.z < 0 || pos.z >= VoxelData.ChunkDepth) {
+            //convert to global coordinates
+            Vector3Int globalPos = new Vector3Int(pos.x + (chunkCoord.x * VoxelData.ChunkWidth), pos.y, pos.z + (chunkCoord.z * VoxelData.ChunkDepth));
+
+            //ask world manager what block is there and return it
+            return _world.GetVoxelGlobal(globalPos);
+        }
+        //else just return locally
+        return chunkData.GetVoxel(pos.x, pos.y, pos.z);
+    }
+
+    //no longer used - we use CheckDrawFace to support transparent blocks culling aswell
     //helper function to check if block from vector3 is air , with out of bounds protection & GLOBAL CULLING - asks world to retrieve block no matter if its in this chunk or not
     private bool CheckAir(Vector3Int pos) {
         //if we are outside of chunk - GLOBAL CULLING
@@ -184,15 +243,18 @@ public class Chunk : MonoBehaviour
         Mesh mesh = new Mesh();
 
         mesh.SetVertices(vertices);
-        mesh.SetTriangles(triangles, 0); // submesh 0, aka default
-
         mesh.SetUVs(0, uvs);
+
+        //split mesh into 2 submeshes, one with opaque material, one with translucent material
+        mesh.subMeshCount = 2;
+        mesh.SetTriangles(opaqueTriangles, 0); // mat 0
+        mesh.SetTriangles(transparentTriangles, 1); // mat 1
 
         mesh.RecalculateNormals(); // for shadows and lights to shine correctly
 
         meshFilter.mesh = mesh; //send to gpu to render
         meshCollider.sharedMesh = null; //to make sure to reset collider mesh when updating mesh
-        meshCollider.sharedMesh = mesh; //create collider of mesh shape
+        meshCollider.sharedMesh = mesh; //create collider of mesh shape, will create from both submeshes
     }
 
     //to keep chunkData private
