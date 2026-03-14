@@ -663,7 +663,7 @@ GameObject:
   - component: {fileID: 330585545}
   - component: {fileID: 330585544}
   - component: {fileID: 330585547}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: Camera
   m_TagString: MainCamera
   m_Icon: {fileID: 0}
@@ -1086,7 +1086,7 @@ GameObject:
   - component: {fileID: 634149125}
   - component: {fileID: 634149124}
   - component: {fileID: 634149127}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: _player
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2604,25 +2604,6 @@ MonoBehaviour:
   offsetZ: 0
   tickInterval: 0.05
   randomTicksPerChunk: 24
-  blockBreakPrefab: {fileID: 3020830551168979440, guid: 129e0337e3a7cb147ab4903fca4a820f,
-    type: 3}
-  atlasSize: 9
-  particleMaterials:
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 2100000, guid: 23ecbe0f8b632c84b9d09851a06e05ea, type: 2}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 2100000, guid: 5538fd32fc69b95488a91e6c0778155d, type: 2}
   blockBreakParticlePrefabs:
   - {fileID: 0}
   - {fileID: 1687195137664220738, guid: 20e587e07ee273543b6f6abd3d6c8b35, type: 3}
