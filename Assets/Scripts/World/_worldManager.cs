@@ -24,6 +24,9 @@ public class _worldManager : MonoBehaviour {
     public int randomTicksPerChunk = 24; //how many blocks to check per chunk to update
     private float tickTimer = 0f; // internal timer
 
+    [Header("Particle System")]
+    public GameObject[] blockBreakParticlePrefabs;
+
     //spawning variables/timer
     private bool isPlayerSpawned = false;
     private float spawnCheckTimer = 0.5f;
@@ -410,6 +413,19 @@ public class _worldManager : MonoBehaviour {
     private void UpdateChunkMesh(Vector3Int coord) {
         if(activeChunks.TryGetValue(coord, out Chunk neighbourChunk)) {
             neighbourChunk.GenerateMesh();
+        }
+    }
+
+    //spawn break block aprticles from prefab
+    public void SpawnBlockParticles(Vector3Int pos, byte blockID) {
+        Vector3 spawnPos = new Vector3(pos.x + 0.5f, pos.y + 0.5f, pos.z + 0.5f);
+
+        if(blockBreakParticlePrefabs[blockID] != null) {
+            GameObject fx = Instantiate(blockBreakParticlePrefabs[blockID], spawnPos, Quaternion.identity);
+
+            fx.GetComponent<ParticleSystem>().Play();
+        } else {
+            Debug.Log("block break has no particles");
         }
     }
 }
