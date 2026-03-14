@@ -2607,6 +2607,38 @@ MonoBehaviour:
   blockBreakPrefab: {fileID: 3020830551168979440, guid: 129e0337e3a7cb147ab4903fca4a820f,
     type: 3}
   atlasSize: 9
+  particleMaterials:
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 2100000, guid: 23ecbe0f8b632c84b9d09851a06e05ea, type: 2}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 2100000, guid: 5538fd32fc69b95488a91e6c0778155d, type: 2}
+  blockBreakParticlePrefabs:
+  - {fileID: 0}
+  - {fileID: 1687195137664220738, guid: 20e587e07ee273543b6f6abd3d6c8b35, type: 3}
+  - {fileID: 1687195137664220738, guid: 35e7f7f2a8a5815448af5e3593d50d94, type: 3}
+  - {fileID: 1687195137664220738, guid: 129e0337e3a7cb147ab4903fca4a820f, type: 3}
+  - {fileID: 1687195137664220738, guid: 09241c94ad5cb804c819722fc9c5ba2a, type: 3}
+  - {fileID: 1687195137664220738, guid: 12d4b1f076bebf141b14dda64a29652f, type: 3}
+  - {fileID: 1687195137664220738, guid: 403a6618b0cdbb44ca4a6912b549b76c, type: 3}
+  - {fileID: 1687195137664220738, guid: 471a1f5b8cfd06144a3116288f635da5, type: 3}
+  - {fileID: 1687195137664220738, guid: 5923af1c15a00b243b8b55949c0349ab, type: 3}
+  - {fileID: 0}
+  - {fileID: 1687195137664220738, guid: 9c2ad3740e19b6b41b819a1d62f58413, type: 3}
+  - {fileID: 1687195137664220738, guid: 941bcefa3f9d9fd4b9b35e20cc95f4b0, type: 3}
+  - {fileID: 1687195137664220738, guid: 355d1026963fc8944afec0ea90f0824f, type: 3}
+  - {fileID: 1687195137664220738, guid: 5a136f1deb56bd842b000d91cf267bda, type: 3}
+  - {fileID: 1687195137664220738, guid: 06e3b9abd9794184da90a59a9284bba2, type: 3}
 --- !u!4 &1993332512
 Transform:
   m_ObjectHideFlags: 0

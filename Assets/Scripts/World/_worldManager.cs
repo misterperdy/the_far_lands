@@ -25,8 +25,7 @@ public class _worldManager : MonoBehaviour {
     private float tickTimer = 0f; // internal timer
 
     [Header("Particle System")]
-    public ParticleSystem blockBreakPrefab;
-    public int atlasSize = 9;
+    public GameObject[] blockBreakParticlePrefabs;
 
     //spawning variables/timer
     private bool isPlayerSpawned = false;
@@ -417,20 +416,16 @@ public class _worldManager : MonoBehaviour {
         }
     }
 
-    //spawn break block aprticles from prefab the same texture of the block
+    //spawn break block aprticles from prefab
     public void SpawnBlockParticles(Vector3Int pos, byte blockID) {
         Vector3 spawnPos = new Vector3(pos.x + 0.5f, pos.y + 0.5f, pos.z + 0.5f);
-        ParticleSystem fx = Instantiate(blockBreakPrefab, spawnPos, Quaternion.identity);
 
-        Vector2 texturePos = VoxelData.GetTexturePosition(blockID);//get block texture position from atlast
+        if(blockBreakParticlePrefabs[blockID] != null) {
+            GameObject fx = Instantiate(blockBreakParticlePrefabs[blockID], spawnPos, Quaternion.identity);
 
-        //convert to 1D
-        int frameIndex = (((atlasSize - 1) - (int)texturePos.y) * atlasSize) + (int)texturePos.x;
-
-        //apply to particles
-        var textureSheet = fx.textureSheetAnimation;
-        textureSheet.startFrame = frameIndex;
-
-        fx.Play();
+            fx.GetComponent<ParticleSystem>().Play();
+        } else {
+            Debug.Log("block break has no particles");
+        }
     }
 }
