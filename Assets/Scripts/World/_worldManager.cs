@@ -46,6 +46,11 @@ public class _worldManager : MonoBehaviour {
 
     CharacterController _playerCharController;
 
+    [Header("Cave Noise")]
+    public float caveNoiseFrequency = 0.02f; // cave size, smaller values: bigger caves
+    public float caveThreshold = 0.5f; //noise under this value, will generate a cave
+    [HideInInspector]public FastNoiseLite caveNoise; //reference to cave noise script
+
     // **OLD UNUSED VARIABLES**
 
     //MAP OF CHUNKS - basically the world storage map
@@ -67,6 +72,9 @@ public class _worldManager : MonoBehaviour {
 
         Debug.Log("generating world with Seed: " + seed);
 
+        //initialize cave noise & parameters
+        InitializeCaveNoise();
+
         //init pool
         int poolSize = (renderDistance * 2 + 1) * (renderDistance * 2 + 1) + renderDistance; //render distance squiared + render distance safety padding 
 
@@ -85,6 +93,17 @@ public class _worldManager : MonoBehaviour {
 
         //force first generation instantly
         UpdateChunksAroundPlayer();
+    }
+
+    //function to set up cave noise script with given parameters
+    private void InitializeCaveNoise() {
+        caveNoise = new FastNoiseLite();
+        caveNoise.SetNoiseType(FastNoiseLite.NoiseType.OpenSimplex2); // looks more natural than 3D perlin, more organic
+        caveNoise.SetSeed(seed);
+        caveNoise.SetFrequency(caveNoiseFrequency); // zoom in/out of noise
+        caveNoise.SetFractalType(FastNoiseLite.FractalType.FBm); //fractal brownian motion, more layers of noise, and they get add up
+        caveNoise.SetFractalOctaves(3);
+        //octave 1 is the base of the cave rooms, 2 adds more variety/holes in ground/top/walls, and third adds final details, gives realistic cave look
     }
 
     private void Update() {
