@@ -12,6 +12,8 @@ public class _worldManager : MonoBehaviour {
     public int renderDistance = 4;
     public float chunkUpdateInterval = 0.5f; // every 0.5 seconds look if need to show new chunks
     private float chunkUpdateTimer = 0f; // internal timer
+    public float lazyChunkLoadingInterval = 0.1f; // break between rendering new chunks
+    private float lazyChunkLoadingTimer = 0f;
 
     [Header("World Generator Settings")]
     public int seed;
@@ -120,8 +122,12 @@ public class _worldManager : MonoBehaviour {
             }
         }
 
-        //generate 1 chunk per frame for loading queue to avoid lag spikes
-        if (chunksToLoadQueue.Count > 0) {
+        //generate 1 chunk per time interval for loading queue to avoid lag spikes
+        lazyChunkLoadingTimer += Time.deltaTime;
+
+        if (chunksToLoadQueue.Count > 0 && lazyChunkLoadingTimer >= lazyChunkLoadingInterval) {
+            lazyChunkLoadingTimer = 0f;
+
             Vector3Int nextChunkCoord = chunksToLoadQueue.Dequeue();
 
             //make sure its not already loaded
