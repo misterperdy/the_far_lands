@@ -101,9 +101,9 @@ public class _worldManager : MonoBehaviour {
         surfaceNoise.SetFractalType(FastNoiseLite.FractalType.FBm);
         surfaceNoise.SetFractalOctaves(3);
 
-        //cave noise
+        //cave noise - switched back to perlin
         caveNoise = new FastNoiseLite();
-        caveNoise.SetNoiseType(FastNoiseLite.NoiseType.OpenSimplex2); // looks more natural than 3D perlin, more organic
+        caveNoise.SetNoiseType(FastNoiseLite.NoiseType.Perlin); // 3D perlin
         caveNoise.SetSeed(seed);
         caveNoise.SetFrequency(VoxelData.caveNoiseFrequency); // zoom in/out of noise
         caveNoise.SetFractalType(FastNoiseLite.FractalType.FBm); //fractal brownian motion, more layers of noise, and they get add up

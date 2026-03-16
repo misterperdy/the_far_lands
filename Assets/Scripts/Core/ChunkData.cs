@@ -13,6 +13,8 @@ public class ChunkData
 
     private _worldManager _world; //reference passed with dependency injection in constructor from Chunk script
 
+    private int terrainHeight;
+
     public ChunkData(_worldManager _world) {
         //constructor, initialize the chunk's blocks 1d array
         voxelMap = new byte[VoxelData.ChunkVolume]; // length of 1d array = total volume of chunk
@@ -23,6 +25,8 @@ public class ChunkData
     //procedurally generate terrain based on perlin noise that takes in consideration local coord and global chunk coord
     public void GenerateTerrain(Vector3Int chunkCoord) {
         //go through all 2D flat coordinates, figure out for each what height terrain to reach
+
+
         for (int x = 0; x < VoxelData.ChunkWidth; x++) {
             for (int z = 0; z < VoxelData.ChunkDepth; z++) {
                 //get global coordinates of this block
@@ -42,11 +46,12 @@ public class ChunkData
                 float flattenedNoise = Mathf.Pow(normalizedSurfaceNoise, VoxelData.flattenNoiseExponent);
 
                 //round/multiply to actual terrain height
-                int terrainHeight = Mathf.RoundToInt(flattenedNoise * VoxelData.TerrainHeightMultiplier) + VoxelData.TerrainSolidGroundHeight;
+                terrainHeight = Mathf.RoundToInt(flattenedNoise * VoxelData.TerrainHeightMultiplier) + VoxelData.TerrainSolidGroundHeight;
 
                 //set Y=0 to bedrock
                 int index = VoxelData.Get1DIndex(x, 0, z);
                 voxelMap[index] = (byte)BlockType.Bedrock;
+
 
                 //fill with blocks from y=1
                 for (int y = 1; y < VoxelData.ChunkHeight; y++) {
@@ -58,17 +63,18 @@ public class ChunkData
                         continue;
                     }
 
-                    //cave noise /generation logic
-                    float currentCaveNoise = _world.caveNoise.GetNoise(globalX, y, globalZ);
+                    // cave generation logic
+                    float currentCaveNoise = _world.caveNoise.GetNoise(globalX, y * 2.5f, globalZ);
 
-                    //if noise is over treshold, its cave (carve terrrain), not checking to be below certain Y so we have ground cave openings
-                    bool isCave = currentCaveNoise > VoxelData.caveThreshold;
+                    float surfaceProximity = (float) y / terrainHeight;
+                    float noiseThreshold = Mathf.Lerp(VoxelData.deepTunnelThreshold, VoxelData.surfaceTunnelThreshold, surfaceProximity);
 
-                    if(isCave && y<= terrainHeight) {
-                        voxelMap[index] = (byte)BlockType.Air; //carve ground
-                    }else //regular terrain logic
+                    // caves should reach surface more often
+                    bool isCave = currentCaveNoise > noiseThreshold;
 
-                    if (y == terrainHeight) { //top block  is grass
+                    if (isCave && y <= terrainHeight) {
+                        voxelMap[index] = (byte)BlockType.Air;
+                    } else if (y == terrainHeight) { //top block  is grass
                         voxelMap[index] = (byte)BlockType.Grass;
                     } else if (y < terrainHeight && y > terrainHeight - 5) { // next 4 blocks are dirt
                         voxelMap[index] = (byte)BlockType.Dirt;
@@ -91,7 +97,7 @@ public class ChunkData
         }
 
         //check chunk again to add trees
-        for(int x=2;x<VoxelData.ChunkWidth-2;x++) {
+        for (int x=2;x<VoxelData.ChunkWidth-2;x++) {
             for(int z = 2; z < VoxelData.ChunkDepth - 2; z++) {
 
                 //check where is the grass
