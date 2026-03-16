@@ -175,6 +175,7 @@ public static class VoxelData
     //more noise varaibles
     public static readonly float caveNoiseFrequency = 0.02f; // cave size, smaller values: bigger caves
     public static readonly float caveThreshold = 0.5f; //noise under this value, will generate a cave
+    public static readonly float flattenNoiseExponent = 2.5f; //value 1 will not flatten anything
 
     //foliage settings
     public static readonly float grassChance = 0.15f; 
