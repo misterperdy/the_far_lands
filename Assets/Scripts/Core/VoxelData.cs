@@ -170,7 +170,7 @@ public static class VoxelData
     // -------- Terrain Generation data --------
     public static readonly float TerrainNoiseScale = 0.01f; // zoom on noisemap ; smaller = smoother terrain ; larger = rougher terrain
     public static readonly int TerrainHeightMultiplier = 15; //how tall mountains will be
-    public static readonly int TerrainSolidGroundHeight = 10; // base height of world
+    public static readonly int TerrainSolidGroundHeight = 64; // base height of world
 
     //more noise varaibles
     public static readonly float caveNoiseFrequency = 0.02f; // cave size, smaller values: bigger caves

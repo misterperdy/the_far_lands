@@ -318,6 +318,13 @@ public class _worldManager : MonoBehaviour {
 
         //add to list of active chunks
         activeChunks.Add(coord, targetChunk);
+
+        //Culling: when a chunk is generated, regenerate mesh of his 4 neighbors, to prevent any "undegraound walls"
+        UpdateChunkMesh(new Vector3Int (coord.x-1, coord.y, coord.z));
+        UpdateChunkMesh(new Vector3Int(coord.x+1, coord.y, coord.z));
+        UpdateChunkMesh(new Vector3Int(coord.x, coord.y, coord.z-1));
+        UpdateChunkMesh(new Vector3Int(coord.x, coord.y, coord.z+1));
+
     }
 
     /* previous fixed world generate function
