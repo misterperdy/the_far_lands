@@ -29,11 +29,17 @@ public class ChunkData
                 float globalX = (chunkCoord.x * VoxelData.ChunkWidth + x);
                 float globalZ = (chunkCoord.z * VoxelData.ChunkDepth + z);
 
+                //old perlin noise
                 //generate perlin noise value based on global block coordinates
-                float noiseValue = Mathf.PerlinNoise((globalX + _world.offsetX )* VoxelData.TerrainNoiseScale, (globalZ + _world.offsetZ) * VoxelData.TerrainNoiseScale);
+                //float noiseValue = Mathf.PerlinNoise((globalX + _world.offsetX )* VoxelData.TerrainNoiseScale, (globalZ + _world.offsetZ) * VoxelData.TerrainNoiseScale);
+
+                //new simplex noise with fastnoiselite
+                float rawSurfaceNoise = _world.surfaceNoise.GetNoise(globalX, globalZ); // get the noise at the chunk coordinates
+                //simplex gives noise from -1 to 1 while mathf.perlinnoise what we used in the paste gives from 0 to 1, so we normalize to not break the existing terrain logic
+                float normalizedNoise = (rawSurfaceNoise + 1f) / 2f;
 
                 //round/multiply to actual terrain height
-                int terrainHeight = Mathf.RoundToInt(noiseValue * VoxelData.TerrainHeightMultiplier) + VoxelData.TerrainSolidGroundHeight;
+                int terrainHeight = Mathf.RoundToInt(normalizedNoise * VoxelData.TerrainHeightMultiplier) + VoxelData.TerrainSolidGroundHeight;
 
                 //set Y=0 to bedrock
                 int index = VoxelData.Get1DIndex(x, 0, z);

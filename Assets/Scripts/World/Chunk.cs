@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using Unity.VisualScripting;
 using UnityEngine;
 
-//this script to be added to chunk prefab/gameobject and will generate logic for the chunk
+//this script to be added to chunk prefab/gameobject and will generate visuals for the chunk
 
 [RequireComponent(typeof(MeshFilter), typeof(MeshRenderer), typeof(MeshCollider))]
 public class Chunk : MonoBehaviour

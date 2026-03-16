@@ -16,8 +16,6 @@ public class _worldManager : MonoBehaviour {
     [Header("World Generator Settings")]
     public int seed;
     public bool useRandomSeed = true;
-    [HideInInspector] public float offsetX; // offsets for perln noiuse map
-    [HideInInspector] public float offsetZ;
 
     [Header("Random Tick System")]
     public float tickInterval = 0.05f; //20 tps
@@ -46,10 +44,9 @@ public class _worldManager : MonoBehaviour {
 
     CharacterController _playerCharController;
 
-    [Header("Cave Noise")]
-    public float caveNoiseFrequency = 0.02f; // cave size, smaller values: bigger caves
-    public float caveThreshold = 0.5f; //noise under this value, will generate a cave
-    [HideInInspector]public FastNoiseLite caveNoise; //reference to cave noise script
+    //noises
+    [HideInInspector]public FastNoiseLite caveNoise; //reference to cave noise script (3D)
+    [HideInInspector] public FastNoiseLite surfaceNoise; // surface noise reference (2D)
 
     // **OLD UNUSED VARIABLES**
 
@@ -65,15 +62,10 @@ public class _worldManager : MonoBehaviour {
             seed = Random.Range(-99999, 99999);
         }
 
-        //init random generator to generate DIFFERENT numbers
-        Random.InitState(seed);
-        offsetX = Random.Range(-100000f, 100000f);
-        offsetZ = Random.Range(-100000f, 100000f);
-
         Debug.Log("generating world with Seed: " + seed);
 
-        //initialize cave noise & parameters
-        InitializeCaveNoise();
+        //initialize  noise
+        InitializeNoise();
 
         //init pool
         int poolSize = (renderDistance * 2 + 1) * (renderDistance * 2 + 1) + renderDistance; //render distance squiared + render distance safety padding 
@@ -95,12 +87,23 @@ public class _worldManager : MonoBehaviour {
         UpdateChunksAroundPlayer();
     }
 
-    //function to set up cave noise script with given parameters
-    private void InitializeCaveNoise() {
+    //function to set up cave (3d) + top (2d) noise script with given parameters
+    private void InitializeNoise() {
+        //migrated from perlin noise to OpenSimplex2 (open source variant of simplex noise) it looks better for terrain
+
+        //top noise
+        surfaceNoise = new FastNoiseLite();
+        surfaceNoise.SetNoiseType(FastNoiseLite.NoiseType.OpenSimplex2);
+        surfaceNoise.SetSeed(seed);
+        surfaceNoise.SetFrequency(VoxelData.TerrainNoiseScale);
+        surfaceNoise.SetFractalType(FastNoiseLite.FractalType.FBm);
+        surfaceNoise.SetFractalOctaves(3);
+
+        //cave noise
         caveNoise = new FastNoiseLite();
         caveNoise.SetNoiseType(FastNoiseLite.NoiseType.OpenSimplex2); // looks more natural than 3D perlin, more organic
         caveNoise.SetSeed(seed);
-        caveNoise.SetFrequency(caveNoiseFrequency); // zoom in/out of noise
+        caveNoise.SetFrequency(VoxelData.caveNoiseFrequency); // zoom in/out of noise
         caveNoise.SetFractalType(FastNoiseLite.FractalType.FBm); //fractal brownian motion, more layers of noise, and they get add up
         caveNoise.SetFractalOctaves(3);
         //octave 1 is the base of the cave rooms, 2 adds more variety/holes in ground/top/walls, and third adds final details, gives realistic cave look
