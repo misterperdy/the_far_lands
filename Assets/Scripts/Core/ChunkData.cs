@@ -52,6 +52,22 @@ public class ChunkData
                 for (int y = 1; y < VoxelData.ChunkHeight; y++) {
                     index = VoxelData.Get1DIndex(x, y, z);
 
+                    //if its air skip
+                    if(y > terrainHeight + 1) {
+                        voxelMap[index] = (byte)BlockType.Air;
+                        continue;
+                    }
+
+                    //cave noise /generation logic
+                    float currentCaveNoise = _world.caveNoise.GetNoise(globalX, y, globalZ);
+
+                    //if noise is over treshold, its cave (carve terrrain), not checking to be below certain Y so we have ground cave openings
+                    bool isCave = currentCaveNoise > VoxelData.caveThreshold;
+
+                    if(isCave && y<= terrainHeight) {
+                        voxelMap[index] = (byte)BlockType.Air; //carve ground
+                    }else //regular terrain logic
+
                     if (y == terrainHeight) { //top block  is grass
                         voxelMap[index] = (byte)BlockType.Grass;
                     } else if (y < terrainHeight && y > terrainHeight - 5) { // next 4 blocks are dirt
@@ -61,7 +77,8 @@ public class ChunkData
                     } else if (y == terrainHeight + 1) { //sometimes add TALL GRASS
                         float randomChance = UnityEngine.Random.value;
 
-                        if(randomChance < VoxelData.grassChance) {
+                        if (randomChance < VoxelData.grassChance && voxelMap[VoxelData.Get1DIndex(x,y-1,z)] == (byte)BlockType.Grass) {
+                            //check to only generate tall grass over grass
                             voxelMap[index] = (byte)BlockType.TallGrass;
                         } else {
                             voxelMap[index] = (byte)BlockType.Air;
