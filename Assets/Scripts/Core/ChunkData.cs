@@ -3,6 +3,7 @@
 // this script will hold the information for one chunk
 
 using System;
+using System.Runtime.CompilerServices;
 using System.Xml.Schema;
 using UnityEngine;
 
@@ -26,6 +27,27 @@ public class ChunkData
     public void GenerateTerrain(Vector3Int chunkCoord) {
         //use system random for multithreading support(we can't multitread unity api stuff)
         System.Random rng = new System.Random(_world.seed + chunkCoord.x * 1000 + chunkCoord.z);
+
+        //generate 3d cave noise from 4 in 4 blocks
+        int step = 4;
+        int gridX = (VoxelData.ChunkWidth / step) + 1;
+        int gridY = (VoxelData.ChunkHeight / step) + 1;
+        int gridZ = (VoxelData.ChunkDepth / step) + 1;
+
+        float[,,] caveNoiseGrid = new float[gridX, gridY, gridZ]; //dense array
+
+        for(int gx =0 ; gx < gridX; gx++) {
+            for(int gz= 0; gz < gridZ; gz++) {
+                for(int gy = 0; gy < gridY; gy++) {
+                    float globalX = (chunkCoord.x * VoxelData.ChunkWidth) + (gx * step);
+                    float globalZ = (chunkCoord.z * VoxelData.ChunkDepth) + (gz * step);
+                    float globalY = (gy * step) * 2.5f;
+
+                    caveNoiseGrid[gx, gy, gz] = _world.caveNoise.GetNoise(globalX, globalY, globalZ);
+                }
+            }
+        }
+
 
         //go through all 2D flat coordinates, figure out for each what height terrain to reach
 
@@ -55,6 +77,14 @@ public class ChunkData
                 int index = VoxelData.Get1DIndex(x, 0, z);
                 voxelMap[index] = (byte)BlockType.Bedrock;
 
+                //TRILINEAR INTERPOLATION FOR CAVES VARIABLE DECLARATION
+                int gX0 = x / step;
+                int gX1 = gX0 + 1;
+                float tx = (x % step) / (float)step;
+
+                int gZ0 = z / step;
+                int gZ1 = gZ0 + 1;
+                float tz = (z % step) / (float) step;
 
                 //fill with blocks from y=1
                 for (int y = 1; y < VoxelData.ChunkHeight; y++) {
@@ -66,8 +96,33 @@ public class ChunkData
                         continue;
                     }
 
-                    // cave generation logic
-                    float currentCaveNoise = _world.caveNoise.GetNoise(globalX, y * 2.5f, globalZ);
+                    // CAVE TRILINEAR INTERPOLATION
+                    int gY0 = y / step;
+                    int gY1 = gY0 + 1;
+                    float ty = (y % step) / (float)step;
+
+                    //get values from 8 corners of current "cube"
+                    float c000 = caveNoiseGrid[gX0, gY0, gZ0];
+                    float c100 = caveNoiseGrid[gX1, gY0, gZ0];
+                    float c010 = caveNoiseGrid[gX0, gY1, gZ0];
+                    float c110 = caveNoiseGrid[gX1, gY1, gZ0];
+                    float c001 = caveNoiseGrid[gX0, gY0, gZ1];
+                    float c101 = caveNoiseGrid[gX1, gY0, gZ1];
+                    float c011 = caveNoiseGrid[gX0, gY1, gZ1];
+                    float c111 = caveNoiseGrid[gX1, gY1, gZ1];
+
+                    //lerp on x-axis
+                    float c00 = Mathf.Lerp(c000, c100, tx);
+                    float c10 = Mathf.Lerp(c010, c110, tx);
+                    float c01 = Mathf.Lerp(c001, c101, tx);
+                    float c11 = Mathf.Lerp(c011, c111, tx);
+
+                    //lerp on y
+                    float c0 = Mathf.Lerp(c00, c10, ty);
+                    float c1 = Mathf.Lerp(c01, c11, ty);
+
+                    //lerp and "guess" noise on z
+                    float currentCaveNoise = Mathf.Lerp(c0, c1, tz);
 
                     float surfaceProximity = (float) y / terrainHeight;
                     float noiseThreshold = Mathf.Lerp(VoxelData.deepTunnelThreshold, VoxelData.surfaceTunnelThreshold, surfaceProximity);
