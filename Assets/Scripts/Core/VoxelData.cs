@@ -168,12 +168,17 @@ public static class VoxelData
     }
 
     // -------- Terrain Generation data --------
-    public static readonly float TerrainNoiseScale = 0.05f; // zoom on noisemap ; smaller = smoother terrain ; larger = rougher terrain
+    public static readonly float TerrainNoiseScale = 0.01f; // zoom on noisemap ; smaller = smoother terrain ; larger = rougher terrain
     public static readonly int TerrainHeightMultiplier = 15; //how tall mountains will be
-    public static readonly int TerrainSolidGroundHeight = 10; // base height of world
+    public static readonly int TerrainSolidGroundHeight = 64; // base height of world
+
+    //more noise varaibles
+    public static readonly float caveNoiseFrequency = 0.02f; // cave size, smaller values: bigger caves
+    public static readonly float flattenNoiseExponent = 2.5f; //value 1 will not flatten anything
+    public static readonly float surfaceTunnelThreshold = 0.3f; //cave entrance Threshold
+    public static readonly float deepTunnelThreshold = 0.25f; //deep caves Threshold
 
     //foliage settings
-    [Header("Foliage Settings")]
     public static readonly float grassChance = 0.15f; 
     public static readonly float treeChance = 0.0025f; 
 }

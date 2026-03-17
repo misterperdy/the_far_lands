@@ -13,6 +13,8 @@ public class ChunkData
 
     private _worldManager _world; //reference passed with dependency injection in constructor from Chunk script
 
+    private int terrainHeight;
+
     public ChunkData(_worldManager _world) {
         //constructor, initialize the chunk's blocks 1d array
         voxelMap = new byte[VoxelData.ChunkVolume]; // length of 1d array = total volume of chunk
@@ -23,27 +25,55 @@ public class ChunkData
     //procedurally generate terrain based on perlin noise that takes in consideration local coord and global chunk coord
     public void GenerateTerrain(Vector3Int chunkCoord) {
         //go through all 2D flat coordinates, figure out for each what height terrain to reach
+
+
         for (int x = 0; x < VoxelData.ChunkWidth; x++) {
             for (int z = 0; z < VoxelData.ChunkDepth; z++) {
                 //get global coordinates of this block
                 float globalX = (chunkCoord.x * VoxelData.ChunkWidth + x);
                 float globalZ = (chunkCoord.z * VoxelData.ChunkDepth + z);
 
+                //old perlin noise
                 //generate perlin noise value based on global block coordinates
-                float noiseValue = Mathf.PerlinNoise((globalX + _world.offsetX )* VoxelData.TerrainNoiseScale, (globalZ + _world.offsetZ) * VoxelData.TerrainNoiseScale);
+                //float noiseValue = Mathf.PerlinNoise((globalX + _world.offsetX )* VoxelData.TerrainNoiseScale, (globalZ + _world.offsetZ) * VoxelData.TerrainNoiseScale);
+
+                //new simplex noise with fastnoiselite
+                float rawSurfaceNoise = _world.surfaceNoise.GetNoise(globalX, globalZ); // get the noise at the chunk coordinates
+                //simplex gives noise from -1 to 1 while mathf.perlinnoise what we used in the paste gives from 0 to 1, so we normalize to not break the existing terrain logic
+                float normalizedSurfaceNoise = (rawSurfaceNoise + 1f) / 2f;
+
+                //flatten the noise, smaller values will get smaller, bigger values will remain big
+                float flattenedNoise = Mathf.Pow(normalizedSurfaceNoise, VoxelData.flattenNoiseExponent);
 
                 //round/multiply to actual terrain height
-                int terrainHeight = Mathf.RoundToInt(noiseValue * VoxelData.TerrainHeightMultiplier) + VoxelData.TerrainSolidGroundHeight;
+                terrainHeight = Mathf.RoundToInt(flattenedNoise * VoxelData.TerrainHeightMultiplier) + VoxelData.TerrainSolidGroundHeight;
 
                 //set Y=0 to bedrock
                 int index = VoxelData.Get1DIndex(x, 0, z);
                 voxelMap[index] = (byte)BlockType.Bedrock;
 
+
                 //fill with blocks from y=1
                 for (int y = 1; y < VoxelData.ChunkHeight; y++) {
                     index = VoxelData.Get1DIndex(x, y, z);
 
-                    if (y == terrainHeight) { //top block  is grass
+                    //if its air skip
+                    if(y > terrainHeight + 1) {
+                        voxelMap[index] = (byte)BlockType.Air;
+                        continue;
+                    }
+
+                    // cave generation logic
+                    float currentCaveNoise = _world.caveNoise.GetNoise(globalX, y * 2.5f, globalZ);
+
+                    float surfaceProximity = (float) y / terrainHeight;
+                    float noiseThreshold = Mathf.Lerp(VoxelData.deepTunnelThreshold, VoxelData.surfaceTunnelThreshold, surfaceProximity);
+
+                    bool isCave = currentCaveNoise > noiseThreshold;
+
+                    if (isCave && y <= terrainHeight) {
+                        voxelMap[index] = (byte)BlockType.Air;
+                    } else if (y == terrainHeight) { //top block  is grass
                         voxelMap[index] = (byte)BlockType.Grass;
                     } else if (y < terrainHeight && y > terrainHeight - 5) { // next 4 blocks are dirt
                         voxelMap[index] = (byte)BlockType.Dirt;
@@ -52,7 +82,8 @@ public class ChunkData
                     } else if (y == terrainHeight + 1) { //sometimes add TALL GRASS
                         float randomChance = UnityEngine.Random.value;
 
-                        if(randomChance < VoxelData.grassChance) {
+                        if (randomChance < VoxelData.grassChance && voxelMap[VoxelData.Get1DIndex(x,y-1,z)] == (byte)BlockType.Grass) {
+                            //check to only generate tall grass over grass
                             voxelMap[index] = (byte)BlockType.TallGrass;
                         } else {
                             voxelMap[index] = (byte)BlockType.Air;
@@ -65,7 +96,7 @@ public class ChunkData
         }
 
         //check chunk again to add trees
-        for(int x=2;x<VoxelData.ChunkWidth-2;x++) {
+        for (int x=2;x<VoxelData.ChunkWidth-2;x++) {
             for(int z = 2; z < VoxelData.ChunkDepth - 2; z++) {
 
                 //check where is the grass
