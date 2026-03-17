@@ -24,6 +24,9 @@ public class ChunkData
 
     //procedurally generate terrain based on perlin noise that takes in consideration local coord and global chunk coord
     public void GenerateTerrain(Vector3Int chunkCoord) {
+        //use system random for multithreading support(we can't multitread unity api stuff)
+        System.Random rng = new System.Random(_world.seed + chunkCoord.x * 1000 + chunkCoord.z);
+
         //go through all 2D flat coordinates, figure out for each what height terrain to reach
 
 
@@ -80,7 +83,7 @@ public class ChunkData
                     } else if (y <= terrainHeight - 5) { // rest below is stone
                         voxelMap[index] = (byte)BlockType.Stone;
                     } else if (y == terrainHeight + 1) { //sometimes add TALL GRASS
-                        float randomChance = UnityEngine.Random.value;
+                        float randomChance = (float)rng.NextDouble();
 
                         if (randomChance < VoxelData.grassChance && voxelMap[VoxelData.Get1DIndex(x,y-1,z)] == (byte)BlockType.Grass) {
                             //check to only generate tall grass over grass
@@ -111,7 +114,7 @@ public class ChunkData
 
                 //if 
                 if(surfaceY > 0) {
-                    if (UnityEngine.Random.value < VoxelData.treeChance) {
+                    if (rng.NextDouble() < VoxelData.treeChance) {
                         GenerateTree(x, surfaceY + 1, z);
                     }
                 }
@@ -175,7 +178,8 @@ public class ChunkData
 
     //tree
     private void GenerateTree(int baseX, int baseY, int baseZ) {
-        int trunkHeight = UnityEngine.Random.Range(4, 7); //trhunk height
+        System.Random treeRng = new System.Random(baseX * 100 + baseZ);
+        int trunkHeight = treeRng.Next(4,7); //trhunk height
 
         //generate trunk
         for (int i = 0; i < trunkHeight; i++) {
@@ -202,7 +206,7 @@ public class ChunkData
 
                     //cut corners so its not a cube
                     if (Mathf.Abs(x) == currentRadius && Mathf.Abs(z) == currentRadius ) {
-                        if(UnityEngine.Random.value > 0.5f) {
+                        if(treeRng.NextDouble() > 0.5f) {
                             continue;
                         }
                         if(y != leavesStart) {
