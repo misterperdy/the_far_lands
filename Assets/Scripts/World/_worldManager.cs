@@ -2,6 +2,8 @@ using System.Collections;
 using System.Collections.Generic;
 using Unity.VisualScripting;
 using UnityEngine;
+using System.Threading.Tasks;
+using System.Collections.Concurrent;
 
 public class _worldManager : MonoBehaviour {
     //assign in inspector
@@ -32,7 +34,8 @@ public class _worldManager : MonoBehaviour {
     private float spawnCheckTimer = 0.5f;
 
     // 2 dictionaries, one for CHUNKDATA for actual content of every chunk - all of it instantiated and present on runtime
-    private Dictionary<Vector3Int, ChunkData> worldData = new Dictionary<Vector3Int, ChunkData> (); 
+    private ConcurrentDictionary<Vector3Int, ChunkData> worldData = new ConcurrentDictionary<Vector3Int, ChunkData> ();  //concurrent dictionary for thread-safe
+    private HashSet<Vector3Int> chunksGeneratingData = new HashSet<Vector3Int> (); //hash set for check if chunk is already generated
 
     // one for CHUNKS visual representation, will only instantiate what is required based on radius/render distance
     private Dictionary<Vector3Int, Chunk> activeChunks = new Dictionary<Vector3Int, Chunk> ();
@@ -43,6 +46,9 @@ public class _worldManager : MonoBehaviour {
 
     //waiting queue for loading chunk tasks
     private Queue<Vector3Int> chunksToLoadQueue = new Queue<Vector3Int> ();
+
+    //waiting queue for loading chunkData with 1 chunk padding in every direction to render mesh only once for chunks inside render distance
+    private Queue<Vector3Int> chunkDataToLoadQueue = new Queue<Vector3Int> ();
 
     CharacterController _playerCharController;
 
@@ -122,18 +128,54 @@ public class _worldManager : MonoBehaviour {
             }
         }
 
-        //generate 1 chunk per time interval for loading queue to avoid lag spikes
+        //chunk loading
+
+        //check to remove from queues
+        //check if we need to load new chunkdata, PROCESS ON DIFFERENT THREAD
+        if (chunkDataToLoadQueue.Count > 0) {
+            Vector3Int dataCoord = chunkDataToLoadQueue.Dequeue();
+
+            //if its not loaded, load it
+            if (!worldData.ContainsKey(dataCoord) && !chunksGeneratingData.Contains(dataCoord)) {
+                chunksGeneratingData.Add(dataCoord);
+
+                //create task
+                Task.Run(() => {
+                    ChunkData newData = new ChunkData(this);
+                    newData.GenerateTerrain(dataCoord);
+                    worldData.TryAdd(dataCoord, newData); //concurrent dictionary uses tryadd
+                });
+            }
+        }
+
+        //check visuals updating
         lazyChunkLoadingTimer += Time.deltaTime;
 
         if (chunksToLoadQueue.Count > 0 && lazyChunkLoadingTimer >= lazyChunkLoadingInterval) {
-            lazyChunkLoadingTimer = 0f;
+            //look at first chunk
+            Vector3Int nextChunkCoord = chunksToLoadQueue.Peek();
 
-            Vector3Int nextChunkCoord = chunksToLoadQueue.Dequeue();
-
-            //make sure its not already loaded
-            if (!activeChunks.ContainsKey(nextChunkCoord)) {
-                LoadChunk(nextChunkCoord); // load it
+            //check if his data and neighbours data is in memory
+            bool isDataReady = false;
+            if (worldData.ContainsKey(nextChunkCoord) &&
+                worldData.ContainsKey(new Vector3Int(nextChunkCoord.x - 1, 0, nextChunkCoord.z)) &&
+                worldData.ContainsKey(new Vector3Int(nextChunkCoord.x + 1, 0, nextChunkCoord.z)) &&
+                worldData.ContainsKey(new Vector3Int(nextChunkCoord.x, 0, nextChunkCoord.z - 1)) &&
+                worldData.ContainsKey(new Vector3Int(nextChunkCoord.x, 0, nextChunkCoord.z + 1))
+            ){
+                isDataReady = true;
             }
+
+            //if data is ready, instantiate the visual
+            if (isDataReady) {
+                chunksToLoadQueue.Dequeue();
+                lazyChunkLoadingTimer = 0f;
+
+                if (!activeChunks.ContainsKey(nextChunkCoord)) {
+                    LoadChunk(nextChunkCoord);
+                }
+            }
+
         }
 
         //internal clock to check new chunks, avoinding IEnumerators
@@ -141,7 +183,7 @@ public class _worldManager : MonoBehaviour {
 
         if(chunkUpdateTimer <= 0f) {
             //look around to inspect new (or saved) chunks to be drawn
-            UpdateChunksAroundPlayer();
+            UpdateChunksAroundPlayer(); // add stuff to queues
             chunkUpdateTimer = chunkUpdateInterval;
         }
 
@@ -179,7 +221,7 @@ public class _worldManager : MonoBehaviour {
                     //if its not air and its not transparent turn grass to dirt
                     if (blockAbove != (byte)BlockType.Air && !VoxelData.IsTransparent(blockAbove)) {
                         chunk.SetVoxelToChunkData(x, y, z, (byte)BlockType.Dirt);
-                        chunk.GenerateMesh(); // regenerate mesh
+                        UpdateChunkMeshAsync(chunk); // regenerate mesh
                     }
 
                 }//else if its dirt and next to grass, turn it into grass spread
@@ -217,7 +259,7 @@ public class _worldManager : MonoBehaviour {
                         if (neighbourID == (byte)BlockType.Grass) {
                             //convert ourselves to grass
                             chunk.SetVoxelToChunkData(x, y, z, (byte)BlockType.Grass);
-                            chunk.GenerateMesh(); // regenerate mesh
+                            UpdateChunkMeshAsync(chunk); // regenerate mesh
                         }
                     }
                 }
@@ -280,28 +322,28 @@ public class _worldManager : MonoBehaviour {
         }
 
         //generate new chunks/ load existing ones from worldData where needed
-        for (int x = -renderDistance; x <= renderDistance; x++) {
-            for (int z = -renderDistance; z <= renderDistance; z++) {
+        for (int x = -(renderDistance+1); x <= (renderDistance+1); x++) {
+            for (int z = -(renderDistance + 1); z <= (renderDistance + 1); z++) {
                 Vector3Int coord = new Vector3Int(playerChunkX + x, 0, playerChunkZ + z);
 
-                //if its not already visible, add to loading queue
-                if (!activeChunks.ContainsKey(coord) && !chunksToLoadQueue.Contains(coord)) {
-                    chunksToLoadQueue.Enqueue(coord);
+                //if its not generated in memory, generate and add to queue
+                if (!worldData.ContainsKey(coord) && !chunkDataToLoadQueue.Contains(coord)) {
+                    chunkDataToLoadQueue.Enqueue(coord);
+                }
+
+                //if we are inside render distance
+                if (Mathf.Abs(x) <= renderDistance && Mathf.Abs(z) <= renderDistance) {
+                    //if its not already visible, add to loading queue
+                    if (!activeChunks.ContainsKey(coord) && !chunksToLoadQueue.Contains(coord)) {
+                        chunksToLoadQueue.Enqueue(coord);
+                    }
                 }
             }
         }
     }
 
-    //load chunk from data dictionary if it exists there, if not, generate new one
-    private void LoadChunk(Vector3Int coord) {
-        //check if it doesnt exist, generate it then
-        if (!worldData.ContainsKey(coord)) {
-            //dont have
-            //generate
-            ChunkData newData = new ChunkData(this); // pass world
-            newData.GenerateTerrain(coord);
-            worldData.Add(coord, newData);
-        }
+    //load chunk from data dictionary if it exists there, if not, generate new one, loads ASYNC/THREADED
+    private async Task LoadChunk(Vector3Int coord) {
 
         //try grab from pool avaialble chunk
         Chunk targetChunk;
@@ -320,17 +362,19 @@ public class _worldManager : MonoBehaviour {
 
         //init with new data and redraw it
         targetChunk.Init(coord, this, worldData[coord]);
-        targetChunk.GenerateMesh();
+
+        //send generate mesh on other thread and wait for it to finish
+        await Task.Run(() => {
+            targetChunk.BuildMeshData();
+        });
+
+        //come back to main thread to apply the data
+
+        targetChunk.ApplyMesh();
+        activeChunks.Add(coord, targetChunk);
 
         //add to list of active chunks
         activeChunks.Add(coord, targetChunk);
-
-        //Culling: when a chunk is generated, regenerate mesh of his 4 neighbors, to prevent any "undegraound walls"
-        UpdateChunkMesh(new Vector3Int (coord.x-1, coord.y, coord.z));
-        UpdateChunkMesh(new Vector3Int(coord.x+1, coord.y, coord.z));
-        UpdateChunkMesh(new Vector3Int(coord.x, coord.y, coord.z-1));
-        UpdateChunkMesh(new Vector3Int(coord.x, coord.y, coord.z+1));
-
     }
 
     /* previous fixed world generate function
@@ -418,7 +462,7 @@ public class _worldManager : MonoBehaviour {
 
             //if chunk is active, regenerate the mesh
             if(activeChunks.TryGetValue(targetchunkCoord, out Chunk activeChunk)) {
-                activeChunk.GenerateMesh();
+                UpdateChunkMeshAsync(activeChunk);
             }
 
             //If we are on chunk edge, then we also need to update the neighbour chunk, or else it would remain with empty edge face
@@ -447,8 +491,17 @@ public class _worldManager : MonoBehaviour {
     //helper function to get a chunk coordinates and if they exist in the dictionary update its mesh
     private void UpdateChunkMesh(Vector3Int coord) {
         if(activeChunks.TryGetValue(coord, out Chunk neighbourChunk)) {
-            neighbourChunk.GenerateMesh();
+            UpdateChunkMeshAsync(neighbourChunk);
         }
+    }
+
+    //async function for update chunk mesh
+    public async void UpdateChunkMeshAsync(Chunk targetChunk) {
+        await Task.Run(() => {
+            targetChunk.BuildMeshData();
+        });
+
+        targetChunk.ApplyMesh();
     }
 
     //spawn break block aprticles from prefab
