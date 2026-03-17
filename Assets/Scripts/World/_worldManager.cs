@@ -29,6 +29,9 @@ public class _worldManager : MonoBehaviour {
     [Header("Particle System")]
     public GameObject[] blockBreakParticlePrefabs;
 
+    [Header("Lighting")]
+    public GameObject torchLightPrefab;
+
     //spawning variables/timer
     private bool isPlayerSpawned = false;
     private float spawnCheckTimer = 0.5f;
@@ -363,6 +366,9 @@ public class _worldManager : MonoBehaviour {
         //init with new data and redraw it
         targetChunk.Init(coord, this, worldData[coord]);
 
+        //semaphore
+        targetChunk.isGeneratingMesh = true;
+
         //send generate mesh on other thread and wait for it to finish
         await Task.Run(() => {
             targetChunk.BuildMeshData();
@@ -371,6 +377,14 @@ public class _worldManager : MonoBehaviour {
         //come back to main thread to apply the data
 
         targetChunk.ApplyMesh();
+
+        targetChunk.isGeneratingMesh = false;
+
+        if (targetChunk.isMeshDirty) {
+            targetChunk.isMeshDirty = false;
+            UpdateChunkMeshAsync(targetChunk);
+        }
+
         activeChunks.Add(coord, targetChunk);
 
         //add to list of active chunks
@@ -497,11 +511,25 @@ public class _worldManager : MonoBehaviour {
 
     //async function for update chunk mesh
     public async void UpdateChunkMeshAsync(Chunk targetChunk) {
+        if (targetChunk.isGeneratingMesh) {
+            targetChunk.isMeshDirty = true; //dont update it
+            return;
+        }
+
+        targetChunk.isGeneratingMesh = true;
+
         await Task.Run(() => {
             targetChunk.BuildMeshData();
         });
 
         targetChunk.ApplyMesh();
+
+        targetChunk.isGeneratingMesh = false;
+
+        if (targetChunk.isMeshDirty) { //if it was modified while stuck in semaphore, re-update it
+            targetChunk.isMeshDirty = false;
+            UpdateChunkMeshAsync(targetChunk);
+        }
     }
 
     //spawn break block aprticles from prefab

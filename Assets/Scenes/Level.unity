@@ -2626,6 +2626,9 @@ MonoBehaviour:
   - {fileID: 1687195137664220738, guid: 3e8e8e394fb763d43967fc4732459eb0, type: 3}
   - {fileID: 1687195137664220738, guid: f05302163937b5941b5dcbd34de13739, type: 3}
   - {fileID: 1687195137664220738, guid: 27d47a1988f03b14da61b41e12c827ab, type: 3}
+  - {fileID: 1687195137664220738, guid: b6081394f4f4a0f4cb3e4f22d041208f, type: 3}
+  torchLightPrefab: {fileID: 5866411523380816177, guid: ccfc64b6b5e8b944fa84693a04bcb0e9,
+    type: 3}
 --- !u!4 &1993332512
 Transform:
   m_ObjectHideFlags: 0

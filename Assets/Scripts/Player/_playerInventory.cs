@@ -20,6 +20,7 @@ public class _playerInventory : MonoBehaviour
         hotbar[5] = (byte)BlockType.EmeraldOre;
         hotbar[6] = (byte)BlockType.RubyOre;
         hotbar[7] = (byte)BlockType.Glass;
+        hotbar[8] = (byte)BlockType.Torch;
 
         //update hotbar
         if (_illustrator != null) {

@@ -30,8 +30,10 @@ public class Chunk : MonoBehaviour
     private List<int> transparentTriangles = new List<int>();
 
     private List<int> colliderTriangles = new List<int>(); // list for triangles WITH collsion
-
     private List<int> crossColliderTriangles = new List<int>(); // list for triangles WITH RAYCAST COLLISION BUT NO PLAYER COLLISION - for cross blocks/foliage
+
+    private Dictionary<Vector3Int, GameObject> activeLights = new Dictionary<Vector3Int, GameObject>(); // active lights in scene
+    private List<Vector3Int> currentTorchPositions = new List<Vector3Int>();
 
     //child gameobject for cross collider mesh
     private GameObject crossColliderObj;
@@ -39,6 +41,10 @@ public class Chunk : MonoBehaviour
 
     //vertex count
     private int vertexIndex = 0;
+
+    //semaphore for multithreading
+    public bool isGeneratingMesh = false;
+    public bool isMeshDirty = false;
 
     //function to be run by world manager to instantiate/configure this chunk
     public void Init(Vector3Int coord, _worldManager _world, ChunkData _data) {
@@ -82,6 +88,7 @@ public class Chunk : MonoBehaviour
         colliderTriangles.Clear();
         crossColliderTriangles.Clear();
         uvs.Clear();
+        currentTorchPositions.Clear();
         vertexIndex = 0;
 
         for (int x = 0; x < VoxelData.ChunkWidth; x++) {
@@ -94,6 +101,11 @@ public class Chunk : MonoBehaviour
                     if (blockID != (byte)BlockType.Air) {
                         //send info to function to draw that block at that coordinates
                         UpdateMeshData(new Vector3Int(x, y, z), blockID);
+
+                        if(blockID == (byte)BlockType.Torch) {
+                            //remember position of torch
+                            currentTorchPositions.Add(new Vector3Int(x, y, z));
+                        }
                     }
                 }
             }
@@ -340,14 +352,14 @@ public class Chunk : MonoBehaviour
         mesh.SetTriangles(opaqueTriangles, 0); // mat 0
         mesh.SetTriangles(transparentTriangles, 1); // mat 1
 
-        if(vertices.Count> 0) {
+        if (vertices.Count > 0) {
             mesh.RecalculateNormals(); // for shadows and lights to shine correctly
         }
 
         meshFilter.mesh = mesh; //send to gpu to render
 
         //separate collisi0on mesh from our collision triangles
-        if(colliderTriangles.Count > 0) {
+        if (colliderTriangles.Count > 0) {
             Mesh collisionMesh = new Mesh();
             collisionMesh.SetVertices(vertices);
             collisionMesh.SetTriangles(colliderTriangles, 0);
@@ -369,7 +381,35 @@ public class Chunk : MonoBehaviour
         } else {
             crossMeshCollider.sharedMesh = null;
         }
-        
+
+        //Check lights to remove & add new lights (From torches)
+        List<Vector3Int> lightsToRemove = new List<Vector3Int>();
+
+        foreach (var kvp in activeLights) {
+            if (!currentTorchPositions.Contains(kvp.Key)) {
+                Destroy(kvp.Value); // torch has been removed, also remove the light
+                lightsToRemove.Add(kvp.Key);
+            }
+        }
+
+        //remove the light
+        foreach ( var pos in lightsToRemove) {
+            activeLights.Remove(pos);
+        }
+
+        //check for new lights
+        foreach( var pos in currentTorchPositions) {
+            if (!activeLights.ContainsKey(pos)) {
+                //calculate real world position
+                Vector3 worldPos = new Vector3((chunkCoord.x * VoxelData.ChunkWidth) + pos.x + 0.5f, pos.y + 0.65f, (chunkCoord.z * VoxelData.ChunkDepth) + pos.z + 0.5f);
+
+                //insatntiate lgiht there
+                GameObject newLight = Instantiate(_world.torchLightPrefab, worldPos, Quaternion.identity, this.transform);
+
+                //add to dictionary so we can delete it later if needed
+                activeLights.Add(pos, newLight);
+            }
+        }
     }
 
     //to keep chunkData private

@@ -155,10 +155,12 @@ public static class VoxelData
             return new Vector2(2, 5);
         } else if (blockID == (byte)BlockType.RubyOre) {
             return new Vector2(5, 3);
+        } else if (blockID == (byte)BlockType.Torch) {
+            return new Vector2(8, 0);
         }
 
-        //default value - error block
-        return new Vector2(0, 0);
+            //default value - error block
+            return new Vector2(0, 0);
     }
 
     //fucntion to check if block is transparent
@@ -169,7 +171,7 @@ public static class VoxelData
 
     //function to check if block should be drawn in X-shape (foilage)
     public static bool IsCrossModel(byte blockID) {
-        if (blockID == (byte)BlockType.TallGrass || blockID == (byte)BlockType.RedMushroom || blockID == (byte)BlockType.BrownMushroom) return true;
+        if (blockID == (byte)BlockType.TallGrass || blockID == (byte)BlockType.RedMushroom || blockID == (byte)BlockType.BrownMushroom || blockID == (byte)BlockType.Torch) return true;
         return false;
     }
 
