@@ -340,24 +340,36 @@ public class Chunk : MonoBehaviour
         mesh.SetTriangles(opaqueTriangles, 0); // mat 0
         mesh.SetTriangles(transparentTriangles, 1); // mat 1
 
-        mesh.RecalculateNormals(); // for shadows and lights to shine correctly
+        if(vertices.Count> 0) {
+            mesh.RecalculateNormals(); // for shadows and lights to shine correctly
+        }
 
         meshFilter.mesh = mesh; //send to gpu to render
 
         //separate collisi0on mesh from our collision triangles
-        Mesh collisionMesh = new Mesh();
-        collisionMesh.SetVertices(vertices);
-        collisionMesh.SetTriangles(colliderTriangles, 0);
+        if(colliderTriangles.Count > 0) {
+            Mesh collisionMesh = new Mesh();
+            collisionMesh.SetVertices(vertices);
+            collisionMesh.SetTriangles(colliderTriangles, 0);
 
-        meshCollider.sharedMesh = null; //to make sure to reset collider mesh when updating mesh
-        meshCollider.sharedMesh = collisionMesh; //set collision mesh
+            meshCollider.sharedMesh = null; //to make sure to reset collider mesh when updating mesh
+            meshCollider.sharedMesh = collisionMesh; //set collision mesh
+        } else {
+            meshCollider.sharedMesh = null;
+        }
 
-        //collision mesh for cross models/foliage blocks you can pass throguh
-        Mesh crossMesh = new Mesh();
-        crossMesh.SetVertices(vertices);
-        crossMesh.SetTriangles(crossColliderTriangles, 0);
-        crossMeshCollider.sharedMesh = null;
-        crossMeshCollider.sharedMesh = crossMesh;
+
+        if (crossColliderTriangles.Count > 0) {
+            //collision mesh for cross models/foliage blocks you can pass throguh
+            Mesh crossMesh = new Mesh();
+            crossMesh.SetVertices(vertices);
+            crossMesh.SetTriangles(crossColliderTriangles, 0);
+            crossMeshCollider.sharedMesh = null;
+            crossMeshCollider.sharedMesh = crossMesh;
+        } else {
+            crossMeshCollider.sharedMesh = null;
+        }
+        
     }
 
     //to keep chunkData private
