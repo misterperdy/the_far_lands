@@ -69,7 +69,6 @@ public class ChunkData
                     float surfaceProximity = (float) y / terrainHeight;
                     float noiseThreshold = Mathf.Lerp(VoxelData.deepTunnelThreshold, VoxelData.surfaceTunnelThreshold, surfaceProximity);
 
-                    // caves should reach surface more often
                     bool isCave = currentCaveNoise > noiseThreshold;
 
                     if (isCave && y <= terrainHeight) {
