@@ -15,7 +15,14 @@ public enum BlockType : byte {
     BrownMushroom = 11,
     RedMushroom = 12,
     Leaves = 13,
-    Wood = 14
+    Wood = 14,
+    CoalOre = 15,
+    CopperOre = 16,
+    IronOre = 17,
+    GoldOre = 18,
+    DiamondOre = 19,
+    EmeraldOre = 20,
+    RubyOre = 21
 }
 
 //on enum you can explicitly write the actual value of the item (default is int, here we changed to byte) , unity automatically does this but its good to write it now explicit

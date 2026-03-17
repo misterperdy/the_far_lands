@@ -140,6 +140,21 @@ public static class VoxelData
                 return new Vector2(1,8); //log side
             }
 
+            //ORES
+        } else if (blockID == (byte)BlockType.CoalOre) {
+            return new Vector2(3, 8);
+        } else if (blockID == (byte)BlockType.CopperOre) {
+            return new Vector2(3, 6);
+        } else if (blockID == (byte)BlockType.IronOre) {
+            return new Vector2(2, 8);
+        } else if (blockID == (byte)BlockType.GoldOre) {
+            return new Vector2(2, 3);
+        } else if (blockID == (byte)BlockType.DiamondOre) {
+            return new Vector2(2, 0);
+        } else if (blockID == (byte)BlockType.EmeraldOre) {
+            return new Vector2(2, 5);
+        } else if (blockID == (byte)BlockType.RubyOre) {
+            return new Vector2(5, 3);
         }
 
         //default value - error block
