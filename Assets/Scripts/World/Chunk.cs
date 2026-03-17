@@ -74,7 +74,7 @@ public class Chunk : MonoBehaviour
     }
 
     //generate the mesh from chunk data
-    public void GenerateMesh() {
+    public void BuildMeshData() {
         //CLEAR OLD MESH
         vertices.Clear();
         opaqueTriangles.Clear();
@@ -99,7 +99,8 @@ public class Chunk : MonoBehaviour
             }
         }
 
-        RenderMesh();
+        //don't call render mesh here anymore, function only calculates mesh data
+        //RenderMesh();
     }
 
     //add to mesh required/to be drawn faces for this block
@@ -327,8 +328,8 @@ public class Chunk : MonoBehaviour
         return VoxelData.GetTexturePosition(blockID, faceIndex);
     }
 
-    //render into unity
-    private void RenderMesh() {
+    //render async into unity
+    public void ApplyMesh() {
         Mesh mesh = new Mesh();
 
         mesh.SetVertices(vertices);
