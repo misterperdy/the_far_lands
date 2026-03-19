@@ -9,6 +9,7 @@ public class _playerInventory : MonoBehaviour
     public int currentSlotIndex = 0; //start with slot 0 (0->8)
 
     public _gameIllustrator _illustrator; // assign illustrator and call its UI update function every time hotbar changes
+    public _viewmodelController _viewmodelController;
 
     private void Start() {
         //hardcode some blocks in hotbar
@@ -16,15 +17,17 @@ public class _playerInventory : MonoBehaviour
         hotbar[1] = (byte)BlockType.CopperOre;
         hotbar[2] = (byte)BlockType.IronOre;
         hotbar[3] = (byte)BlockType.GoldOre;
-        hotbar[4] = (byte)BlockType.DiamondOre;
-        hotbar[5] = (byte)BlockType.EmeraldOre;
-        hotbar[6] = (byte)BlockType.RubyOre;
         hotbar[7] = (byte)BlockType.Glass;
         hotbar[8] = (byte)BlockType.Torch;
 
         //update hotbar
         if (_illustrator != null) {
             _illustrator.UpdateHotbarUI();
+        }
+
+        //update viewmodel
+        if (_viewmodelController != null) {
+            _viewmodelController.UpdateViewmodel(getSelectedBlockID());
         }
     }
 
@@ -38,6 +41,11 @@ public class _playerInventory : MonoBehaviour
                 //update hotbar
                 if (_illustrator != null) {
                     _illustrator.UpdateHotbarUI();
+                }
+
+                //update viewmodel
+                if (_viewmodelController != null) {
+                    _viewmodelController.UpdateViewmodel(getSelectedBlockID());
                 }
             }
         }
@@ -55,6 +63,11 @@ public class _playerInventory : MonoBehaviour
                 _illustrator.UpdateHotbarUI();
             }
 
+            //update viewmodel
+            if (_viewmodelController != null) {
+                _viewmodelController.UpdateViewmodel(getSelectedBlockID());
+            }
+
         } else if (scroll < 0) {
             currentSlotIndex++;
             if (currentSlotIndex > 8) currentSlotIndex = 0;// loop
@@ -64,6 +77,11 @@ public class _playerInventory : MonoBehaviour
             //update hotbar
             if (_illustrator != null) {
                 _illustrator.UpdateHotbarUI();
+            }
+
+            //update viewmodel
+            if (_viewmodelController != null) {
+                _viewmodelController.UpdateViewmodel(getSelectedBlockID());
             }
 
         }
