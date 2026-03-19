@@ -153,6 +153,9 @@ public class ChunkData
             }
         }
 
+        //add ores
+        GenerateOres(rng);
+
         //check chunk again to add trees
         for (int x=2;x<VoxelData.ChunkWidth-2;x++) {
             for(int z = 2; z < VoxelData.ChunkDepth - 2; z++) {
@@ -173,6 +176,59 @@ public class ChunkData
                         GenerateTree(x, surfaceY + 1, z);
                     }
                 }
+            }
+        }
+    }
+
+    //functions that parse the underground terrain and add ores by "drunk walking" veins (*prng is Pseudo Random Number Generator, cause CPU can't roll dice)
+    private void GenerateOres(System.Random prng) {
+        foreach (VoxelData.OreSettings ore in VoxelData.Ores) {
+            for(int i = 0; i < ore.spawnAttempts; i++) {
+                //chose start location
+                int startX = prng.Next(0, VoxelData.ChunkWidth);
+                int startY = prng.Next(ore.minY, ore.maxY + 1); //exclusive max
+                int startZ = prng.Next(0, VoxelData.ChunkDepth);
+
+                int index = VoxelData.Get1DIndex(startX, startY, startZ);
+
+                //check if its stone
+                if (voxelMap[index] == (byte)BlockType.Stone) {
+                    int veinSize = prng.Next(ore.minVeinSize, ore.maxVeinSize + 1);
+                    GenerateVein(startX, startY, startZ, veinSize, ore.blockID, prng);
+                }
+            }
+        }
+    }
+
+    //random walk allgorithm to generate the vein
+    private void GenerateVein(int startX, int startY, int startZ, int veinSize, byte blockID, System.Random prng) {
+        int currentX = startX;
+        int currentY = startY;
+        int currentZ = startZ;
+
+        //try place for vein size amount of times
+        for(int i = 0; i < veinSize; i++) {
+            //check to not exit chunk
+            if(currentX < 0 || currentX >= VoxelData.ChunkWidth || currentY < 1 || currentY >= VoxelData.ChunkHeight || currentZ < 0 || currentZ >= VoxelData.ChunkDepth) {
+                break;
+            }
+
+            int index = VoxelData.Get1DIndex(currentX, currentY, currentZ);
+
+            //only place ore if it's still stone
+            if (voxelMap[index] == (byte)BlockType.Stone) {
+                voxelMap[index] = blockID;
+            }
+
+            //randomyl choose next direction to go to
+            int direction = prng.Next(0, 6);
+            switch (direction) {
+                case 0: currentX++; break;
+                case 1: currentY++; break;
+                case 2: currentZ++; break;
+                case 3: currentX--; break;
+                case 4: currentY--; break;
+                case 5: currentZ--; break;
             }
         }
     }

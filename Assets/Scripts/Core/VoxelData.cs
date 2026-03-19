@@ -225,6 +225,6 @@ public static class VoxelData
         new OreSettings((byte)BlockType.GoldOre, 1, 32, 8, 3, 6), // from y 32, even more rare
         new OreSettings((byte)BlockType.DiamondOre, 1, 16, 4, 2, 5), // from y 16 , very rare, 
         new OreSettings((byte)BlockType.EmeraldOre, 1, 32, 3, 1, 1), // from y 32, very rare and only one spawns(no vein)
-        new OreSettings((byte)BlockType.RubyOre, 2, 2, 2, 1, 3), // only on y=2 right above bedrock and very rare
+        new OreSettings((byte)BlockType.RubyOre, 1, 1, 2, 1, 3), // only on y=1 right above bedrock and very rare
     };
 }
