@@ -711,7 +711,7 @@ Camera:
     height: 1
   near clip plane: 0.01
   far clip plane: 1000
-  field of view: 70
+  field of view: 60
   orthographic: 0
   orthographic size: 5
   m_Depth: -1
@@ -1110,8 +1110,17 @@ MonoBehaviour:
   gravity: -19
   jumpHeight: 1.25
   airControl: 5
+  sprintSpeed: 6.5
+  sneakspeed: 1.5
+  sprintJumpBoost: 1.5
   playerCamera: {fileID: 330585546}
   mouseSensitivity: 2
+  normalCameraY: 0.6
+  sneakCameraY: 0.2
+  cameraTransitionSpeed: 10
+  normalFOV: 60
+  sprintFOV: 75
+  fovTransitionSpeed: 10
   reach: 4
   highlightBlock: {fileID: 960286}
   interactionDelay: 0.15

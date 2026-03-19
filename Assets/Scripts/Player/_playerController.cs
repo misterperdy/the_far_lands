@@ -12,10 +12,24 @@ public class _playerController : MonoBehaviour
     public float jumpHeight = 1.25f;
     public float airControl = 3f; // how hard to change direction mid air( smalleer -> harder)
 
+    [Header("Sprint & Sneak")]
+    public float sprintSpeed = 6.5f;
+    public float sneakspeed = 1.5f;
+    public float sprintJumpBoost = 1.5f;
+
     [Header("Camera Settings")]
     public Transform playerCamera;
+    private Camera _cameraComponent;
     public float mouseSensitivity = 2f;
     private float cameraPitch = 0f; //to rotate on x axis
+
+    public float normalCameraY;
+    public float sneakCameraY;
+    public float cameraTransitionSpeed = 10f;
+
+    public float normalFOV; // will be overwritten by camera
+    public float sprintFOV = 85; //assign in inspector
+    public float fovTransitionSpeed = 10f;
 
     [Header("Interaction Setttings")]
     public float reach = 4f;
@@ -31,6 +45,11 @@ public class _playerController : MonoBehaviour
     private Vector3 velocity;
     private Vector3 currentMoveVelocity;
 
+    private bool isSneaking;
+    private bool isSprinting;
+    private float lastWPressTime = 0f;
+    private float doubleTapThreshold = 0.3f;
+
     private void Start() {
         _controller = GetComponent<CharacterController>();
         _world = FindObjectOfType<_worldManager>();
@@ -40,6 +59,18 @@ public class _playerController : MonoBehaviour
         //lock cursor in middle
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible = false;
+
+        //save Y camera values
+        if (playerCamera != null) {
+            normalCameraY = playerCamera.localPosition.y;
+            sneakCameraY = normalCameraY - 0.4f;
+
+            //get component
+            _cameraComponent = playerCamera.GetComponent<Camera>();
+            if (_cameraComponent != null) {
+                normalFOV = _cameraComponent.fieldOfView;
+            }
+        } else { Debug.Log("player camera not assigned!"); }
     }
 
     private void Update() {
@@ -76,7 +107,45 @@ public class _playerController : MonoBehaviour
         //get raw input
         float x = Input.GetAxisRaw("Horizontal"); //A,D
         float z = Input.GetAxisRaw("Vertical"); //W,S
-        Vector3 targetMove = (transform.right * x + transform.forward * z).normalized * walkSpeed;
+
+        isSneaking = Input.GetKey(KeyCode.LeftShift);
+
+        //sprinting
+        if (Input.GetKeyDown(KeyCode.W)) {
+            if(Time.time - lastWPressTime < doubleTapThreshold) {
+                isSprinting = true;
+            }
+            lastWPressTime = Time.time;
+        }
+
+        //or by moving with CTRL holding
+        if(Input.GetKeyDown(KeyCode.LeftControl) && z > 0) {
+            isSprinting = true;
+        }
+
+        if(z <= 0 || isSneaking) {
+            isSprinting = false;
+        }
+
+        //determine curernt speed
+        float currentTargetSpeed = walkSpeed;
+        if (isSneaking) currentTargetSpeed = sneakspeed;
+        if (isSprinting) currentTargetSpeed = sprintSpeed;
+
+        //canera nivenebt for sneak
+        float targetCamY = isSneaking ? sneakCameraY : normalCameraY;
+        Vector3 camPos = playerCamera.localPosition;
+        camPos.y = Mathf.Lerp(camPos.y, targetCamY, cameraTransitionSpeed * Time.deltaTime);
+        playerCamera.localPosition = camPos;
+
+        //fov change for sprint
+        if(_cameraComponent != null) {
+            float targetFOV = isSprinting ? sprintFOV : normalFOV;
+            _cameraComponent.fieldOfView = Mathf.Lerp(_cameraComponent.fieldOfView, targetFOV, fovTransitionSpeed * Time.deltaTime); // lerp through fovs
+        }
+
+        //actual movement
+        Vector3 targetMove = (transform.right * x + transform.forward * z).normalized * currentTargetSpeed;
 
         if (_controller.isGrounded) { // on ground keep raw speed
             currentMoveVelocity = targetMove;
@@ -92,6 +161,11 @@ public class _playerController : MonoBehaviour
         //jump
         if(Input.GetButton("Jump") && _controller.isGrounded) {
             velocity.y = Mathf.Sqrt(jumpHeight * -2f * gravity);
+
+            //increase speed if sprinting
+            if (isSprinting) {
+                currentMoveVelocity += transform.forward * sprintJumpBoost;
+            }
         }
 
         //apply gravity
@@ -101,8 +175,45 @@ public class _playerController : MonoBehaviour
 
         Vector3 finalMove = new Vector3(currentMoveVelocity.x, velocity.y, currentMoveVelocity.z);
 
+        //sneak edge detection
+        if(isSneaking && _controller.isGrounded) {
+            //check next frame position
+            Vector3 currentPos = transform.position;
+
+            Vector3 predictedX = currentPos + new Vector3(finalMove.x * Time.deltaTime, 0, 0);
+            if (!IsSafeToStep(predictedX)) {
+                finalMove.x = 0f;
+                currentMoveVelocity.x = 0f;
+            }
+
+            Vector3 predictedZ = currentPos + new Vector3(0, 0, finalMove.z * Time.deltaTime);
+            if (!IsSafeToStep(predictedZ)) {
+                finalMove.z = 0f;
+                currentMoveVelocity.z = 0f;
+            }
+
+            //also check edge
+            if(finalMove.x != 0 && finalMove.z != 0) {
+                Vector3 predictedDiag = currentPos + new Vector3(finalMove.x * Time.deltaTime, 0, finalMove.z * Time.deltaTime);
+
+                if (!IsSafeToStep(predictedDiag)) { //stop movement
+                    finalMove.x = 0f;
+                    finalMove.z = 0f;
+                    currentMoveVelocity.x = 0f;
+                    currentMoveVelocity.z = 0f;
+                }
+            }
+
+        }
+
         //move controller, we are multiplying with time so it's not dependant on FPS, but rather on time
         _controller.Move(finalMove * Time.deltaTime);
+    }
+
+    //helper function to raycast 
+    private bool IsSafeToStep(Vector3 pos) {
+        float y = _controller.bounds.min.y + 0.1f;
+        return Physics.Raycast(new Vector3(pos.x, pos.y, pos.z), Vector3.down, 0.3f);
     }
 
     private void HandleInteraction() {
