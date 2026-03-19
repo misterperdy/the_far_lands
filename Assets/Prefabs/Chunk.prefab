@@ -13,7 +13,7 @@ GameObject:
   - component: {fileID: 2578490940899535333}
   - component: {fileID: 5066666316800627182}
   - component: {fileID: 1815918155332474192}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: Chunk
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -99,6 +99,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   chunkCoord: {x: 0, y: 0, z: 0}
+  isGeneratingMesh: 0
+  isMeshDirty: 0
 --- !u!64 &1815918155332474192
 MeshCollider:
   m_ObjectHideFlags: 0
