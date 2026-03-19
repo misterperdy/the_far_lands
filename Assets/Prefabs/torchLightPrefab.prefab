@@ -11,6 +11,7 @@ GameObject:
   - component: {fileID: 1306147238308960900}
   - component: {fileID: 3442855612361590936}
   - component: {fileID: 3105985877372093742}
+  - component: {fileID: -8048838183078783343}
   m_Layer: 0
   m_Name: torchLightPrefab
   m_TagString: Untagged
@@ -118,3 +119,18 @@ MonoBehaviour:
   m_LightCookieSize: {x: 1, y: 1}
   m_LightCookieOffset: {x: 0, y: 0}
   m_SoftShadowQuality: 0
+--- !u!114 &-8048838183078783343
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5866411523380816177}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cea6b472761d52344902568e2e91eec4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  baseIntensity: 3.5
+  flickerSpeed: 8
+  flickerAmount: 1
