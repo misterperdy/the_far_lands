@@ -3,6 +3,7 @@
 //this script will hold GLOBAL INFORMATIONS ABOUT BLOCKS/chunks
 //static -> no need to instantiate, can easily access variables with VoxelData.var
 
+using System.ComponentModel.Design.Serialization;
 using UnityEngine;
 
 public static class VoxelData
@@ -196,6 +197,34 @@ public static class VoxelData
     public static readonly float deepTunnelThreshold = 0.25f; //deep caves Threshold
 
     //foliage settings
-    public static readonly float grassChance = 0.15f; 
-    public static readonly float treeChance = 0.0025f; 
+    public static readonly float grassChance = 0.15f;
+    public static readonly float treeChance = 0.0025f;
+
+
+    //ORE spawning and behaviour information, stored in static array of structs
+    public struct OreSettings {
+        public byte blockID;
+        public int minY, maxY, spawnAttempts, minVeinSize, maxVeinSize;
+
+        //constructor
+        public OreSettings(byte id, int miny, int maxy, int attempts, int minvein, int maxvein) {
+            blockID = id;
+            minY = miny;
+            maxY = maxy;
+            spawnAttempts = attempts;
+            minVeinSize = minvein;
+            maxVeinSize = maxvein;
+        }
+    }
+
+    //static array
+    public static readonly OreSettings[] Ores = new OreSettings[] {
+        new OreSettings((byte)BlockType.CoalOre, 1, 127, 20, 4, 10), //any Y , alot of them
+        new OreSettings((byte)BlockType.CopperOre, 1, 127, 20, 4, 10), // same as coal
+        new OreSettings((byte)BlockType.IronOre, 1, 60, 15, 4, 8), // from y60 below, a little rarer
+        new OreSettings((byte)BlockType.GoldOre, 1, 32, 8, 3, 6), // from y 32, even more rare
+        new OreSettings((byte)BlockType.DiamondOre, 1, 16, 4, 2, 5), // from y 16 , very rare, 
+        new OreSettings((byte)BlockType.EmeraldOre, 1, 32, 3, 1, 1), // from y 32, very rare and only one spawns(no vein)
+        new OreSettings((byte)BlockType.RubyOre, 2, 2, 2, 1, 3), // only on y=2 right above bedrock and very rare
+    };
 }
