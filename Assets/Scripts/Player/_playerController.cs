@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
+using Unity.VisualScripting;
 using UnityEngine;
 
 [RequireComponent(typeof(CharacterController))]
@@ -41,6 +42,7 @@ public class _playerController : MonoBehaviour
     private CharacterController _controller;
     private _gameManager _manager;
     private _playerInventory _inventoryScript;
+    private _viewmodelController _viewModel;
 
     private Vector3 velocity;
     private Vector3 currentMoveVelocity;
@@ -55,6 +57,10 @@ public class _playerController : MonoBehaviour
         _world = FindObjectOfType<_worldManager>();
         _manager = FindObjectOfType<_gameManager>();
         _inventoryScript = GetComponent<_playerInventory>();
+
+        if(_inventoryScript != null) {
+            _viewModel = _inventoryScript._viewmodelController; //grab viewmodel controller from inventory
+        }
 
         //lock cursor in middle
         Cursor.lockState = CursorLockMode.Locked;
@@ -217,22 +223,32 @@ public class _playerController : MonoBehaviour
     }
 
     private void HandleInteraction() {
+        //update interaction timer global
+        if (interactionTimer > 0) {
+            interactionTimer -= Time.deltaTime;
+        }
+
         //raycast
         Ray ray = new Ray(playerCamera.position, playerCamera.forward);
         RaycastHit hit;
 
-        //if we hit a collider
-        if(Physics.Raycast(ray, out hit, reach)) {
+        bool isLookingAtBlock = Physics.Raycast(ray, out hit, reach); // if ray hit something
+
+        Vector3Int breakCoord = Vector3Int.zero;
+        Vector3Int placeCoord = Vector3Int.zero;
+
+        //outline and calculate coordinates logic
+        if (isLookingAtBlock) {
             //we are right on block edge
             //if we go a little bit in direction of ray direction we are inside the block we can break
             //and if we go a little bit in the opposite direction of ray direction we are outside where we need to place
             //and rounding to int we get the exact block coordinates we need to operate on
 
             Vector3 pointInSolidBlock = hit.point + (ray.direction * 0.01f);
-            Vector3Int breakCoord = new Vector3Int(Mathf.FloorToInt(pointInSolidBlock.x), Mathf.FloorToInt(pointInSolidBlock.y), Mathf.FloorToInt(pointInSolidBlock.z));
+            breakCoord = new Vector3Int(Mathf.FloorToInt(pointInSolidBlock.x), Mathf.FloorToInt(pointInSolidBlock.y), Mathf.FloorToInt(pointInSolidBlock.z));
 
             Vector3 pointInEmptyAir = hit.point - (ray.direction * 0.01f);
-            Vector3Int placeCoord = new Vector3Int(Mathf.FloorToInt(pointInEmptyAir.x), Mathf.FloorToInt(pointInEmptyAir.y), Mathf.FloorToInt(pointInEmptyAir.z));
+            placeCoord = new Vector3Int(Mathf.FloorToInt(pointInEmptyAir.x), Mathf.FloorToInt(pointInEmptyAir.y), Mathf.FloorToInt(pointInEmptyAir.z));
 
             //outline
             if (highlightBlock != null) {
@@ -240,20 +256,32 @@ public class _playerController : MonoBehaviour
                 highlightBlock.position = new Vector3(breakCoord.x + 0.5f, breakCoord.y + 0.5f, breakCoord.z + 0.5f);
             }
 
-            //update interaction timer
-            if(interactionTimer > 0) {
-                interactionTimer -= Time.deltaTime;
+        } else {
+            //no raycasthit , hide block outline
+            if (highlightBlock != null) {
+                highlightBlock.gameObject.SetActive(false);
             }
+        }
 
-            //break block logic
-            if (Input.GetMouseButtonDown(0) || (Input.GetMouseButton(0) && interactionTimer<=0f)) {
+        //left click swing / place block logic
+        bool isFirstClick = Input.GetMouseButtonDown(0);
+        bool isHoldingClick = Input.GetMouseButton(0) && interactionTimer <= 0f;
+        if (isFirstClick || (isHoldingClick && isLookingAtBlock)) {
+            //swing animation
+            if (_viewModel != null) {
+                _viewModel.TriggerSwingAnimation(false);
+            }
+            interactionTimer = interactionDelay; //reset timer
 
+            //check to break block
+
+            if (isLookingAtBlock) {
                 //only break if it is not bedrock or air
-                if(_world.GetVoxelGlobal(breakCoord) != (byte)BlockType.Bedrock && _world.GetVoxelGlobal(breakCoord) != (byte)BlockType.Air) {
+                if (_world.GetVoxelGlobal(breakCoord) != (byte)BlockType.Bedrock && _world.GetVoxelGlobal(breakCoord) != (byte)BlockType.Air) {
                     byte blockToBreak = _world.GetVoxelGlobal(breakCoord);
                     _world.SetVoxelGlobal(breakCoord, (byte)BlockType.Air); // we replace block with air
                     _world.SpawnBlockParticles(breakCoord, blockToBreak); //spawn destruction particles
-                    
+
                     //check if foilage above break it also
                     Vector3Int blockAboveCoord = new Vector3Int(breakCoord.x, breakCoord.y + 1, breakCoord.z);
 
@@ -264,41 +292,45 @@ public class _playerController : MonoBehaviour
                         _world.SetVoxelGlobal(blockAboveCoord, (byte)BlockType.Air);
                         _world.SpawnBlockParticles(blockAboveCoord, blockAboveID); //spawn destruction particles
                     }
-
-                    interactionTimer = interactionDelay; // init the timer for hold to break
                 }
             }
+        }
 
-            //place block logic
-            if (Input.GetMouseButtonDown(1) || (Input.GetMouseButton(1) && interactionTimer <= 0f)) {
+        //place block + animation logic
+        if (Input.GetMouseButtonDown(1) || (Input.GetMouseButton(1) && interactionTimer <= 0f)) {
 
-                //logic to prevent placing block inside player using BOUNDS
-                //each object has BOUNDS = "collision box" enclosing itself, we will create bounds for a block and check if it overlaps with character controller's bounds box
+            if (isLookingAtBlock) {
+                //get selected block
+                byte selectedBlock = (byte)BlockType.Air;
+                if(_inventoryScript != null) {
+                    selectedBlock = _inventoryScript.hotbar[_inventoryScript.currentSlotIndex];
+                }
 
-                Vector3 blockCenter = new Vector3(placeCoord.x + 0.5f, placeCoord.y + 0.5f, placeCoord.z + 0.5f);
-                Bounds blockBonds = new Bounds(blockCenter, Vector3.one);
-                Bounds playerBounds = _controller.bounds;
+                if (selectedBlock != (byte)BlockType.Air) {
+                    //logic to prevent placing block inside player using BOUNDS
+                    //each object has BOUNDS = "collision box" enclosing itself, we will create bounds for a block and check if it overlaps with character controller's bounds box
 
-                //check if they overlap
-                if (!playerBounds.Intersects(blockBonds)) {
-                    //place block if they dont
-                    byte selectedBlock = (byte)BlockType.Air; //default have air selected
+                    Vector3 blockCenter = new Vector3(placeCoord.x + 0.5f, placeCoord.y + 0.5f, placeCoord.z + 0.5f);
+                    Bounds blockBonds = new Bounds(blockCenter, Vector3.one);
+                    Bounds playerBounds = _controller.bounds;
 
-                    if (_inventoryScript != null) {
-                        selectedBlock = _inventoryScript.hotbar[_inventoryScript.currentSlotIndex];
+                    //check if they overlap
+                    if (!playerBounds.Intersects(blockBonds)) {
+                        //place block if they dont
+
+                        _world.SetVoxelGlobal(placeCoord, selectedBlock); // place block
+
+                        //swing animation
+                        if (_viewModel != null) {
+                            _viewModel.TriggerSwingAnimation(true);
+                        }
+
+                        interactionTimer = interactionDelay; // init the timer for hold to place
+
+                    } else {
+                        Debug.Log("overlap player");
                     }
-
-                    _world.SetVoxelGlobal(placeCoord, selectedBlock); // place block
-                } else {
-                    Debug.Log("overlap player");
                 }
-
-                interactionTimer = interactionDelay; // init the timer for hold to place
-            }
-        } else {
-            //no raycasthit , hide block outline
-            if (highlightBlock != null) {
-                highlightBlock.gameObject.SetActive(false);
             }
         }
     }

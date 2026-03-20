@@ -13,9 +13,10 @@ public class _viewmodelController : MonoBehaviour
     public CharacterController _playerCharController; // assign in inspector
     private MeshRenderer heldBlockRenderer;
     private Vector3 initialPosition;
+    private Quaternion initialRotation;
     private float bobTimer = 0f;
 
-    [Header("Sway, Bobbing & Swap Settings")]
+    [Header("Sway, Bobbing, Swap, Swing Settings")]
     public float swayAmount = 0.02f;
     public float maxSwayAmount = 0.06f;
     public float swaySmoothness = 6f;
@@ -23,6 +24,9 @@ public class _viewmodelController : MonoBehaviour
     public float bobAmount = 0.05f;
     public float swapDropDistance = -0.8f;
     public float swapSpeed = 5f;
+    public float breakSwingSpeed = 4f;
+    public float placeSwingSpeed = 7f;
+    public Vector3 swingRotation = new Vector3(45f, -15f, 0);//rotate below and a little to center
 
     //swap variables
     private float currentSwapY = 0f;
@@ -31,6 +35,9 @@ public class _viewmodelController : MonoBehaviour
     private byte pendingBlockID = 0;
     private byte currentBlockID = 0;
     private Vector3 currentSmoothedSwayPos; //to not mix up the animations
+    private bool isSwinging = false;
+    private float swingProgress = 0f;
+    private float currentActiveSwingSpeed;
 
     private void Start() {
         if (heldBlock != null) {
@@ -40,6 +47,7 @@ public class _viewmodelController : MonoBehaviour
         //remember default hand position
         if (handPosition != null) {
             initialPosition = handPosition.localPosition;
+            initialRotation = handPosition.localRotation;
             currentSmoothedSwayPos = handPosition.localPosition;
         }
     }
@@ -98,9 +106,35 @@ public class _viewmodelController : MonoBehaviour
 
         //apply final position with both offsets
         handPosition.localPosition = currentSmoothedSwayPos + new Vector3(0, currentSwapY, 0);
+
+        //swing animation
+        if (isSwinging) {
+            swingProgress += Time.deltaTime * currentActiveSwingSpeed;
+
+            //if its done stop the state
+            if(swingProgress >= 1f) {
+                isSwinging = false;
+                swingProgress = 0f;
+                handPosition.localRotation = initialRotation; //reset rotation
+            } else {
+                //if its running SIN 0 - PI - 0
+
+                float curve = Mathf.Sin(Mathf.Sqrt(swingProgress) * Mathf.PI);
+
+                handPosition.localRotation = initialRotation * Quaternion.Euler(swingRotation * curve);
+            }
+        }
     }
 
-    //function to be called by inventory
+    //function to be called by player controller when swinging
+    public void TriggerSwingAnimation(bool placeBlock) {
+        currentActiveSwingSpeed = placeBlock ? placeSwingSpeed : breakSwingSpeed; //set swing speed based on action
+
+        isSwinging = true;
+        swingProgress = 0f; //start from start
+    }
+
+    //function to be called by inventory when changing selected block
     public void UpdateViewmodel(byte newBlockID) {
         if (newBlockID == currentBlockID) return; //don't do animation if it's same block
 
