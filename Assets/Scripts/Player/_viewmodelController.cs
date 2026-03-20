@@ -15,12 +15,22 @@ public class _viewmodelController : MonoBehaviour
     private Vector3 initialPosition;
     private float bobTimer = 0f;
 
-    [Header("Sway/Bobbing Settings")]
+    [Header("Sway, Bobbing & Swap Settings")]
     public float swayAmount = 0.02f;
     public float maxSwayAmount = 0.06f;
     public float swaySmoothness = 6f;
     public float bobSpeed = 14f;
     public float bobAmount = 0.05f;
+    public float swapDropDistance = -0.8f;
+    public float swapSpeed = 5f;
+
+    //swap variables
+    private float currentSwapY = 0f;
+    private float targetSwapY = 0f;
+    private bool isSwapping = false;
+    private byte pendingBlockID = 0;
+    private byte currentBlockID = 0;
+    private Vector3 currentSmoothedSwayPos; //to not mix up the animations
 
     private void Start() {
         if (heldBlock != null) {
@@ -30,6 +40,7 @@ public class _viewmodelController : MonoBehaviour
         //remember default hand position
         if (handPosition != null) {
             initialPosition = handPosition.localPosition;
+            currentSmoothedSwayPos = handPosition.localPosition;
         }
     }
 
@@ -70,14 +81,39 @@ public class _viewmodelController : MonoBehaviour
             bobTimer = 0f;
         }
 
-        //apply both movements
-        Vector3 targetPosition = initialPosition + swayOffset + bobOffset;
+        //remember both movements position
+        Vector3 targetSwayPos = initialPosition + swayOffset + bobOffset;
 
-        handPosition.localPosition = Vector3.Lerp(handPosition.localPosition, targetPosition, swaySmoothness * Time.deltaTime);
+        currentSmoothedSwayPos = Vector3.Lerp(currentSmoothedSwayPos, targetSwayPos, swaySmoothness * Time.deltaTime);
+
+        //see if we need to switch block animation
+        currentSwapY = Mathf.MoveTowards(currentSwapY, targetSwapY, swapSpeed * Time.deltaTime); // use move towards cause its faster than lerp(don't need smoothing here)
+
+        //if block went off-screen change it
+        if (isSwapping && currentSwapY <= swapDropDistance + 0.01f) {
+            PerformActualSwap(); //replace block
+            targetSwapY = 0f;
+            isSwapping = false;
+        }
+
+        //apply final position with both offsets
+        handPosition.localPosition = currentSmoothedSwayPos + new Vector3(0, currentSwapY, 0);
     }
 
-    public void UpdateViewmodel(byte blockID) {
-        if (blockID == 0) {
+    //function to be called by inventory
+    public void UpdateViewmodel(byte newBlockID) {
+        if (newBlockID == currentBlockID) return; //don't do animation if it's same block
+
+        pendingBlockID = newBlockID;
+        targetSwapY = swapDropDistance; //start falling
+        isSwapping = true; // green light for the update to start the swap animation
+    }
+
+    //function to actually replace block/hand
+    private void PerformActualSwap() {
+        currentBlockID = pendingBlockID; //set new block
+
+        if (currentBlockID == 0) {
             //no block selected, show hand
             playerHand.SetActive(true);
             heldBlock.SetActive(false);
@@ -86,8 +122,8 @@ public class _viewmodelController : MonoBehaviour
             heldBlock.SetActive(true);
 
             //look for this block pmaterial from PARTICLES
-            if (_worldManager.blockBreakParticlePrefabs[blockID] != null) {
-                ParticleSystemRenderer psrenderer = _worldManager.blockBreakParticlePrefabs[blockID].GetComponent<ParticleSystemRenderer>();
+            if (_worldManager.blockBreakParticlePrefabs[currentBlockID] != null) {
+                ParticleSystemRenderer psrenderer = _worldManager.blockBreakParticlePrefabs[currentBlockID].GetComponent<ParticleSystemRenderer>();
 
                 if(psrenderer != null && heldBlockRenderer != null) {
                     heldBlockRenderer.material = psrenderer.sharedMaterial;

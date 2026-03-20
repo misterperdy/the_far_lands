@@ -1227,6 +1227,8 @@ MonoBehaviour:
   swaySmoothness: 6
   bobSpeed: 14
   bobAmount: 0.05
+  swapDropDistance: -0.6
+  swapSpeed: 5
 --- !u!1 &657298079
 GameObject:
   m_ObjectHideFlags: 0
@@ -1395,7 +1397,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!4 &719080718
 Transform:
   m_ObjectHideFlags: 0
@@ -2202,7 +2204,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &1452833392
 Transform:
   m_ObjectHideFlags: 0
