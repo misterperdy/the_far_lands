@@ -23,7 +23,9 @@ public enum BlockType : byte {
     DiamondOre = 19,
     EmeraldOre = 20,
     RubyOre = 21,
-    Torch = 22
+    Torch = 22,
+    Water = 23,
+    Lava = 24
 }
 
 //on enum you can explicitly write the actual value of the item (default is int, here we changed to byte) , unity automatically does this but its good to write it now explicit

@@ -74,10 +74,6 @@ public class ChunkData
                 //round/multiply to actual terrain height
                 terrainHeight = Mathf.RoundToInt(flattenedNoise * VoxelData.TerrainHeightMultiplier) + VoxelData.TerrainSolidGroundHeight;
 
-                //set Y=0 to bedrock
-                int index = VoxelData.Get1DIndex(x, 0, z);
-                voxelMap[index] = (byte)BlockType.Bedrock;
-
                 //TRILINEAR INTERPOLATION FOR CAVES VARIABLE DECLARATION
                 int gX0 = x / step;
                 int gX1 = gX0 + 1;
@@ -85,76 +81,94 @@ public class ChunkData
 
                 int gZ0 = z / step;
                 int gZ1 = gZ0 + 1;
-                float tz = (z % step) / (float) step;
+                float tz = (z % step) / (float)step;
 
-                //fill with blocks from y=1
-                for (int y = 1; y < VoxelData.ChunkHeight; y++) {
-                    index = VoxelData.Get1DIndex(x, y, z);
+                //check column
+                for (int y = 0; y < VoxelData.ChunkHeight; y++) {
 
-                    //if its air skip
-                    if(y > terrainHeight + 1) {
-                        voxelMap[index] = (byte)BlockType.Air;
-                        continue;
-                    }
+                    int index = VoxelData.Get1DIndex(x, y, z);
 
-                    // CAVE TRILINEAR INTERPOLATION
-                    int gY0 = y / step;
-                    int gY1 = gY0 + 1;
-                    float ty = (y % step) / (float)step;
-
-                    //get values from 8 corners of current "cube"
-                    float c000 = caveNoiseGrid[gX0, gY0, gZ0];
-                    float c100 = caveNoiseGrid[gX1, gY0, gZ0];
-                    float c010 = caveNoiseGrid[gX0, gY1, gZ0];
-                    float c110 = caveNoiseGrid[gX1, gY1, gZ0];
-                    float c001 = caveNoiseGrid[gX0, gY0, gZ1];
-                    float c101 = caveNoiseGrid[gX1, gY0, gZ1];
-                    float c011 = caveNoiseGrid[gX0, gY1, gZ1];
-                    float c111 = caveNoiseGrid[gX1, gY1, gZ1];
-
-                    //lerp on x-axis
-                    float c00 = Mathf.Lerp(c000, c100, tx);
-                    float c10 = Mathf.Lerp(c010, c110, tx);
-                    float c01 = Mathf.Lerp(c001, c101, tx);
-                    float c11 = Mathf.Lerp(c011, c111, tx);
-
-                    //lerp on y
-                    float c0 = Mathf.Lerp(c00, c10, ty);
-                    float c1 = Mathf.Lerp(c01, c11, ty);
-
-                    //lerp and "guess" noise on z
-                    float currentCaveNoise = Mathf.Lerp(c0, c1, tz);
-
-                    float surfaceProximity = (float) y / terrainHeight;
-                    float noiseThreshold = Mathf.Lerp(VoxelData.deepTunnelThreshold, VoxelData.surfaceTunnelThreshold, surfaceProximity);
-
-                    bool isCave = currentCaveNoise > noiseThreshold;
-
-                    if (isCave && y <= terrainHeight) {
-                        voxelMap[index] = (byte)BlockType.Air;
-                    } else if (y == terrainHeight) { //top block  is grass
-                        voxelMap[index] = (byte)BlockType.Grass;
-                    } else if (y < terrainHeight && y > terrainHeight - 5) { // next 4 blocks are dirt
-                        voxelMap[index] = (byte)BlockType.Dirt;
-                    } else if (y <= terrainHeight - 5) { // rest below is stone
-                        voxelMap[index] = (byte)BlockType.Stone;
-                    } else if (y == terrainHeight + 1) { //sometimes add TALL GRASS
-                        float randomChance = (float)rng.NextDouble();
-
-                        if (randomChance < VoxelData.grassChance && voxelMap[VoxelData.Get1DIndex(x,y-1,z)] == (byte)BlockType.Grass) {
-                            //check to only generate tall grass over grass
-                            voxelMap[index] = (byte)BlockType.TallGrass;
+                    //1st pass - air & water
+                    if (y > terrainHeight) {
+                        if (y <= VoxelData.waterLevel) {
+                            SetVoxel(x, y, z, (byte)BlockType.Water); // puddles
                         } else {
-                            voxelMap[index] = (byte)BlockType.Air;
+                            SetVoxel(x, y, z, (byte)BlockType.Air); // air
                         }
-                    } else { // what is above will be air
-                        voxelMap[index] = (byte)BlockType.Air;
+                        continue; // skip to jnext Y
                     }
+
+                    //2nd pass - solid terrain
+                    byte blockToPlace = (byte)BlockType.Stone;
+
+                    if (y == 0) { // bottom layer is unbreakable bedrock
+                        blockToPlace = (byte)BlockType.Bedrock;
+                    }else if( y >= terrainHeight - 3) {
+                        //last 3 layers
+
+                        if(terrainHeight <= VoxelData.waterLevel + 1) {
+                            blockToPlace = (byte)BlockType.Sand; // sand if we are next to water
+                        } else {
+                            //normal block
+                            blockToPlace = (y == terrainHeight) ? (byte)BlockType.Grass : (byte)BlockType.Dirt; //grass on top and dirt below
+                        }
+
+                    }
+
+                    //caves
+                    if(blockToPlace != (byte)BlockType.Bedrock) {
+
+                        // CAVE TRILINEAR INTERPOLATION
+                        int gY0 = y / step;
+                        int gY1 = gY0 + 1;
+                        float ty = (y % step) / (float)step;
+
+                        //get values from 8 corners of current "cube"
+                        float c000 = caveNoiseGrid[gX0, gY0, gZ0];
+                        float c100 = caveNoiseGrid[gX1, gY0, gZ0];
+                        float c010 = caveNoiseGrid[gX0, gY1, gZ0];
+                        float c110 = caveNoiseGrid[gX1, gY1, gZ0];
+                        float c001 = caveNoiseGrid[gX0, gY0, gZ1];
+                        float c101 = caveNoiseGrid[gX1, gY0, gZ1];
+                        float c011 = caveNoiseGrid[gX0, gY1, gZ1];
+                        float c111 = caveNoiseGrid[gX1, gY1, gZ1];
+
+                        //lerp on x-axis
+                        float c00 = Mathf.Lerp(c000, c100, tx);
+                        float c10 = Mathf.Lerp(c010, c110, tx);
+                        float c01 = Mathf.Lerp(c001, c101, tx);
+                        float c11 = Mathf.Lerp(c011, c111, tx);
+
+                        //lerp on y
+                        float c0 = Mathf.Lerp(c00, c10, ty);
+                        float c1 = Mathf.Lerp(c01, c11, ty);
+
+                        //lerp and "guess" noise on z
+                        float currentCaveNoise = Mathf.Lerp(c0, c1, tz);
+
+                        float surfaceProximity = (float)y / terrainHeight;
+                        float noiseThreshold = Mathf.Lerp(VoxelData.deepTunnelThreshold, VoxelData.surfaceTunnelThreshold, surfaceProximity);
+
+                        bool isCave = currentCaveNoise > noiseThreshold;
+
+                        if (isCave) {
+                            bool isUnderwater = (terrainHeight <= VoxelData.waterLevel);
+                            bool isTooCloseToSurface = (y >= terrainHeight - 3);
+
+                            //if it would hit water don't make air
+                            if(!(isUnderwater && isTooCloseToSurface)) {
+                                blockToPlace = (byte)BlockType.Air;
+                            }
+
+                            
+                        }
+                    }
+                    voxelMap[index] = blockToPlace;
                 }
             }
         }
 
-        //add grass to top blocks made dirt by cave generation
+        //3rd pass - add grass to top blocks made dirt by cave generation
         for(int x = 0; x < VoxelData.ChunkWidth; x++) {
             for(int z = 0; z < VoxelData.ChunkDepth; z++) {
 
@@ -180,7 +194,20 @@ public class ChunkData
         //add ores
         GenerateOres(rng);
 
-        //check chunk again to add trees
+        //bottom lava lakes
+        for(int x= 0; x < VoxelData.ChunkWidth; x++) {
+            for(int z=0;z<VoxelData.ChunkDepth; z++) {
+
+                //only on Y=1 check
+                int index = VoxelData.Get1DIndex(x, 1, z);
+
+                if (voxelMap[index] == (byte)BlockType.Air) {
+                    voxelMap[index] = (byte)BlockType.Lava; //set to lava only if its air to keep stone and ores
+                }
+            }
+        }
+
+        //structures: check chunk again to add trees & tall grass
         for (int x=2;x<VoxelData.ChunkWidth-2;x++) {
             for(int z = 2; z < VoxelData.ChunkDepth - 2; z++) {
 
@@ -198,6 +225,10 @@ public class ChunkData
                 if(surfaceY > 0) {
                     if (rng.NextDouble() < VoxelData.treeChance) {
                         GenerateTree(x, surfaceY + 1, z);
+                    } else if (rng.NextDouble() < VoxelData.grassChance) {
+                        //tall grass
+                        int grassIndex = VoxelData.Get1DIndex(x, surfaceY + 1, z);
+                        voxelMap[grassIndex] = (byte)BlockType.TallGrass;
                     }
                 }
             }
