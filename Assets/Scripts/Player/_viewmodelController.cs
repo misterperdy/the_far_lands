@@ -142,7 +142,7 @@ public class _viewmodelController : MonoBehaviour
 
     //function to be called by inventory when changing selected block
     public void UpdateViewmodel(byte newBlockID) {
-        if (newBlockID == currentBlockID) return; //don't do animation if it's same block
+        if (newBlockID == pendingBlockID) return; //don't do animation if it's same block
 
         pendingBlockID = newBlockID;
         targetSwapY = swapDropDistance; //start falling
