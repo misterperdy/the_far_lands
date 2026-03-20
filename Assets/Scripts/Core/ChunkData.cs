@@ -2,6 +2,7 @@
 
 // this script will hold the information for one chunk
 
+using JetBrains.Annotations;
 using System;
 using System.Runtime.CompilerServices;
 using System.Xml.Schema;
@@ -150,6 +151,29 @@ public class ChunkData
                         voxelMap[index] = (byte)BlockType.Air;
                     }
                 }
+            }
+        }
+
+        //add grass to top blocks made dirt by cave generation
+        for(int x = 0; x < VoxelData.ChunkWidth; x++) {
+            for(int z = 0; z < VoxelData.ChunkDepth; z++) {
+
+                for(int y = VoxelData.ChunkHeight -1; y >= 0; y--) {
+                    byte blockID = GetVoxel(x, y, z);
+
+                    //if its air or leaves or cross block skip
+                    if(blockID == (byte)BlockType.Air || VoxelData.IsCrossModel(blockID) || VoxelData.IsTransparent(blockID)) {
+                        continue;
+                    }
+
+                    //if its dirt turn to gress
+                    if(blockID == (byte)BlockType.Dirt) {
+                        SetVoxel(x, y, z, (byte)BlockType.Grass);
+                    }
+
+                    break; //dont go below, go to next column
+                }
+
             }
         }
 
