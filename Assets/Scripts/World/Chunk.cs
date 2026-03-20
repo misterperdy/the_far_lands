@@ -125,6 +125,13 @@ public class Chunk : MonoBehaviour
 
         bool isTransparent = VoxelData.IsTransparent(blockID);
 
+        //remember if its liquid & if it is liquid above
+        bool isLiquid = (blockID == (byte)BlockType.Water || blockID == (byte)BlockType.Lava);
+        bool isLiquidAbove = false;
+        if (isLiquid) {
+            isLiquidAbove = GetBlockAt(new Vector3Int(pos.x, pos.y + 1, pos.z)) == blockID;
+        }
+
         //check each direction to see if its air next to it
         for (int i = 0; i < 6; i++) {
             //add offset from voxelData to block coords to check whats next to it
@@ -132,11 +139,18 @@ public class Chunk : MonoBehaviour
 
                 //if check air test passes it means we need to draw this face
 
-                //add vertices of default cube added to chunk coordonate in space
-                vertices.Add(pos + VoxelData.voxelVerts[VoxelData.voxelTris[i, 0]]);
-                vertices.Add(pos + VoxelData.voxelVerts[VoxelData.voxelTris[i, 1]]);
-                vertices.Add(pos + VoxelData.voxelVerts[VoxelData.voxelTris[i, 2]]);
-                vertices.Add(pos + VoxelData.voxelVerts[VoxelData.voxelTris[i, 3]]);
+                //calculate and add vertices
+                for(int v = 0; v < 4; v++) {
+                    Vector3 vertex = VoxelData.voxelVerts[VoxelData.voxelTris[i, v]];
+
+                    //if it's liquid and doesn't have liquid above, it needs to be shorter
+                    if (isLiquid && !isLiquidAbove && vertex.y == 1f) {
+                        vertex.y = 0.85f;
+                    }
+
+                    vertices.Add(pos + vertex);
+                }
+                
 
                 //UV texturing ,also send face index, for expansion capabilities for different block textures based on face orientation
                 AddTexture(blockID, i, pos);
@@ -187,14 +201,16 @@ public class Chunk : MonoBehaviour
     private void DrawCrossModel(Vector3Int pos, byte blockID) {
         //we need to draw 4 faces to see it from every angle
 
+        //no longer drawing bakcward faces cause material set to both
+
         //draw the 2 diagonals in both forward and backward order
         AddCrossFace(pos, blockID, new Vector3(0, 0, 0), new Vector3(1, 0, 1), new Vector3(1, 1, 1), new Vector3(0, 1, 0)); //diag 1 front
         //diag 1 backward
-        AddCrossFace(pos, blockID, new Vector3(1, 0, 1), new Vector3(0, 0, 0), new Vector3(0, 1, 0), new Vector3(1, 1, 1));
+        //AddCrossFace(pos, blockID, new Vector3(1, 0, 1), new Vector3(0, 0, 0), new Vector3(0, 1, 0), new Vector3(1, 1, 1));
 
         //diag 2
         AddCrossFace(pos, blockID, new Vector3(0, 0, 1), new Vector3(1, 0, 0), new Vector3(1, 1, 0), new Vector3(0, 1, 1)); //forward
-        AddCrossFace(pos, blockID, new Vector3(1, 0, 0), new Vector3(0, 0, 1), new Vector3(0, 1, 1), new Vector3(1, 1, 0)); //backward
+        //AddCrossFace(pos, blockID, new Vector3(1, 0, 0), new Vector3(0, 0, 1), new Vector3(0, 1, 1), new Vector3(1, 1, 0)); //backward
 
     }
 
@@ -253,6 +269,10 @@ public class Chunk : MonoBehaviour
             return false;
         }
         
+        //* if it's 2 different transparent blocks,  draw us
+        if(currentIsTransparent && neighbourIsTransparent && neighbourID != blockID) {
+            return true;
+        }
 
         //rest of cases, opaque-opaque or glass with opaque neighbour, don't draw ourselves
         return false;

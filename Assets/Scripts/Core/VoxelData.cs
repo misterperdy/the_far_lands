@@ -158,6 +158,10 @@ public static class VoxelData
             return new Vector2(5, 3);
         } else if (blockID == (byte)BlockType.Torch) {
             return new Vector2(8, 0);
+        }else if(blockID == (byte)BlockType.Water) {
+            return new Vector2(8, 1);
+        }else if (blockID == (byte)BlockType.Lava) {
+            return new Vector2(8, 2);
         }
 
             //default value - error block
@@ -166,7 +170,7 @@ public static class VoxelData
 
     //fucntion to check if block is transparent
     public static bool IsTransparent(byte blockID) {
-        if (blockID == (byte)BlockType.Air || blockID == (byte)BlockType.Glass || blockID == (byte)BlockType.Leaves || IsCrossModel(blockID)) return true;
+        if (blockID == (byte)BlockType.Air || blockID == (byte)BlockType.Glass || blockID == (byte)BlockType.Leaves || IsCrossModel(blockID) || blockID == (byte)BlockType.Water || blockID == (byte)BlockType.Lava ) return true;
         return false;
     }
 
