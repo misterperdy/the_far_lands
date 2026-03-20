@@ -7,11 +7,13 @@ public class _viewmodelController : MonoBehaviour
 {
     public GameObject playerHand;
     public GameObject heldBlock; //assign in inspector
+    public GameObject heldCrossItem;
     public Transform handPosition;
 
     public _worldManager _worldManager;
     public CharacterController _playerCharController; // assign in inspector
     private MeshRenderer heldBlockRenderer;
+    private MeshRenderer[] heldCrossItemRenderers; // 2 renderers (2 quad faces)
     private Vector3 initialPosition;
     private Quaternion initialRotation;
     private float bobTimer = 0f;
@@ -42,6 +44,10 @@ public class _viewmodelController : MonoBehaviour
     private void Start() {
         if (heldBlock != null) {
             heldBlockRenderer = heldBlock.GetComponent<MeshRenderer>();
+        }
+
+        if(heldCrossItem != null) {
+            heldCrossItemRenderers = heldCrossItem.GetComponentsInChildren<MeshRenderer>();
         }
 
         //remember default hand position
@@ -151,18 +157,41 @@ public class _viewmodelController : MonoBehaviour
             //no block selected, show hand
             playerHand.SetActive(true);
             heldBlock.SetActive(false);
+            heldCrossItem.SetActive(false);
         } else {
             playerHand.SetActive(false);
-            heldBlock.SetActive(true);
 
-            //look for this block pmaterial from PARTICLES
-            if (_worldManager.blockBreakParticlePrefabs[currentBlockID] != null) {
-                ParticleSystemRenderer psrenderer = _worldManager.blockBreakParticlePrefabs[currentBlockID].GetComponent<ParticleSystemRenderer>();
+            bool isCross = VoxelData.IsCrossModel(currentBlockID); //check what shape current block is
 
-                if(psrenderer != null && heldBlockRenderer != null) {
-                    heldBlockRenderer.material = psrenderer.sharedMaterial;
+            if (!isCross) {
+                heldCrossItem.SetActive(false);
+                heldBlock.SetActive(true);
+
+                //look for this block pmaterial from PARTICLES
+                if (_worldManager.blockBreakParticlePrefabs[currentBlockID] != null) {
+                    ParticleSystemRenderer psrenderer = _worldManager.blockBreakParticlePrefabs[currentBlockID].GetComponent<ParticleSystemRenderer>();
+
+                    if (psrenderer != null && heldBlockRenderer != null) {
+                        heldBlockRenderer.material = psrenderer.sharedMaterial;
+                    }
+                }
+            } else {
+                heldCrossItem.SetActive(true);
+                heldBlock.SetActive(false);
+
+                //look for this block pmaterial from PARTICLES
+                if (_worldManager.blockBreakParticlePrefabs[currentBlockID] != null) {
+                    ParticleSystemRenderer psrenderer = _worldManager.blockBreakParticlePrefabs[currentBlockID].GetComponent<ParticleSystemRenderer>();
+
+                    if (psrenderer != null && heldBlockRenderer != null) {
+                        foreach(MeshRenderer mr in heldCrossItemRenderers) {
+                            mr.material = psrenderer.sharedMaterial; //set same material on both faces
+                        }
+                    }
                 }
             }
+
+            
 
         }
     }
