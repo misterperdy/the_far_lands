@@ -38,6 +38,15 @@ public class _playerController : MonoBehaviour
     public float interactionDelay = 0.15f; //delay when holding click to break/place
     private float interactionTimer = 0f;
 
+    [Header("Liquids")]
+    public float swimSpeedMultiplier = 0.5f;
+    public float swimUpSpeed = 3f;
+    public float waterGravityMultiplier = 0.2f;
+    public float waterTerminalVelocity = -2.5f; // maximum sinking speed
+
+    private bool inLiquid = false; //trigger swimming
+    private bool inLava = false; //kill the player
+
     private _worldManager _world;
     private CharacterController _controller;
     private _gameManager _manager;
@@ -87,6 +96,9 @@ public class _playerController : MonoBehaviour
             }
         }
 
+        //check state if you are in liquids or not
+        CheckLiquids();
+
         //not paused, update everything
         HandleMouseLook();
         HandleMovement();
@@ -135,8 +147,14 @@ public class _playerController : MonoBehaviour
 
         //determine curernt speed
         float currentTargetSpeed = walkSpeed;
-        if (isSneaking) currentTargetSpeed = sneakspeed;
-        if (isSprinting) currentTargetSpeed = sprintSpeed;
+        if (inLiquid) currentTargetSpeed *= swimSpeedMultiplier;// SWIMMING
+        else {
+            //dont let sneak/sprint change speed in water
+            if (isSneaking) currentTargetSpeed = sneakspeed;
+            if (isSprinting) currentTargetSpeed = sprintSpeed;
+        }
+        
+        
 
         //canera nivenebt for sneak
         float targetCamY = isSneaking ? sneakCameraY : normalCameraY;
@@ -153,36 +171,54 @@ public class _playerController : MonoBehaviour
         //actual movement
         Vector3 targetMove = (transform.right * x + transform.forward * z).normalized * currentTargetSpeed;
 
-        if (_controller.isGrounded) { // on ground keep raw speed
+        if (_controller.isGrounded && !inLiquid) { // on ground keep raw speed
             currentMoveVelocity = targetMove;
-        } else { // on air lerp to have some inertia in changing direction
+        } else { // on air / water lerp to have some inertia in changing direction
             currentMoveVelocity = Vector3.Lerp(currentMoveVelocity, targetMove, airControl * Time.deltaTime);
         }
 
-        //ground check
-        if(_controller.isGrounded && velocity.y < 0) {
-            velocity.y = -2f; //pull down to be connected 100% to the ground
-        }
-
-        //jump
-        if(Input.GetButton("Jump") && _controller.isGrounded) {
-            velocity.y = Mathf.Sqrt(jumpHeight * -2f * gravity);
-
-            //increase speed if sprinting
-            if (isSprinting) {
-                currentMoveVelocity += transform.forward * sprintJumpBoost;
+        if (inLiquid) {
+            //SWIM
+            if (Input.GetButton("Jump")){
+                velocity.y = Mathf.Lerp(velocity.y, swimUpSpeed, 2f * Time.deltaTime);
+            } else {
+                velocity.y += (gravity * waterGravityMultiplier) * Time.deltaTime; //slowly sink
             }
-        }
 
-        //apply gravity
-        velocity.y += gravity * Time.deltaTime;
+            //velocity dampening
+            velocity.y = Mathf.Lerp(velocity.y, 0f, 4f * Time.deltaTime);
+
+            if (velocity.y < waterTerminalVelocity) {
+                velocity.y = waterTerminalVelocity; //don't sink too fast
+            }
+        } else {
+            //not in liquid
+
+            //ground check
+            if (_controller.isGrounded && velocity.y < 0) {
+                velocity.y = -2f; //pull down to be connected 100% to the ground
+            }
+
+            //jump
+            if (Input.GetButton("Jump") && _controller.isGrounded) {
+                velocity.y = Mathf.Sqrt(jumpHeight * -2f * gravity);
+
+                //increase speed if sprinting
+                if (isSprinting) {
+                    currentMoveVelocity += transform.forward * sprintJumpBoost;
+                }
+            }
+
+            //apply gravity
+            velocity.y += gravity * Time.deltaTime;
+        }
 
         //create vector with both horizontal and vertical movement
 
         Vector3 finalMove = new Vector3(currentMoveVelocity.x, velocity.y, currentMoveVelocity.z);
 
         //sneak edge detection
-        if(isSneaking && _controller.isGrounded) {
+        if(isSneaking && _controller.isGrounded && !inLiquid) {
             //check next frame position
             Vector3 currentPos = transform.position;
 
@@ -220,6 +256,28 @@ public class _playerController : MonoBehaviour
     private bool IsSafeToStep(Vector3 pos) {
         float y = _controller.bounds.min.y + 0.1f;
         return Physics.Raycast(new Vector3(pos.x, pos.y, pos.z), Vector3.down, 0.3f);
+    }
+
+    //check if we are inside liquid
+    private void CheckLiquids() {
+        //pivot of player is at feet
+        Vector3 checkPos = transform.position + new Vector3(0, 0.8f, 0);
+        Vector3Int voxelPos = new Vector3Int(Mathf.FloorToInt(checkPos.x), Mathf.FloorToInt(checkPos.y), Mathf.FloorToInt(checkPos.z));
+
+        byte currentBlock = _world.GetVoxelGlobal(voxelPos);
+
+        //check what block id it is
+        if(currentBlock == (byte)BlockType.Water || currentBlock == (byte)BlockType.Lava) {
+            inLiquid = true;
+        } else {
+            inLiquid = false;
+        }
+
+        if(currentBlock == (byte)BlockType.Lava) {
+            inLava = true;
+        } else {
+            inLava = false;
+        }
     }
 
     private void HandleInteraction() {

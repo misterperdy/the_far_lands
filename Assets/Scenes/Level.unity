@@ -1233,6 +1233,10 @@ MonoBehaviour:
   reach: 4
   highlightBlock: {fileID: 960286}
   interactionDelay: 0.15
+  swimSpeedMultiplier: 0.5
+  swimUpSpeed: 1.5
+  waterGravityMultiplier: 0.2
+  waterTerminalVelocity: -2.5
 --- !u!143 &634149125
 CharacterController:
   m_ObjectHideFlags: 0
