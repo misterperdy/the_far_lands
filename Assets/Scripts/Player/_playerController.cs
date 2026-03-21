@@ -44,8 +44,8 @@ public class _playerController : MonoBehaviour
     public float waterGravityMultiplier = 0.2f;
     public float waterTerminalVelocity = -2.5f; // maximum sinking speed
 
-    private bool inLiquid = false; //trigger swimming
-    private bool inLava = false; //kill the player
+    public bool inLiquid = false; //trigger swimming
+    public bool inLava = false; //kill the player
 
     private _worldManager _world;
     private CharacterController _controller;
@@ -90,7 +90,7 @@ public class _playerController : MonoBehaviour
 
     private void Update() {
         //if game is paused, player should not update anything
-        if(_manager != null) {
+        if (_manager != null) {
             if (_manager.isPaused) {
                 return;
             }
@@ -103,6 +103,14 @@ public class _playerController : MonoBehaviour
         HandleMouseLook();
         HandleMovement();
         HandleInteraction();
+
+        //for now, kill player=send to menu if touching lava
+        if (inLava) {
+            _gameIllustrator _illustrator = GameObject.FindAnyObjectByType<_gameIllustrator>();
+            if (_illustrator != null) {
+                _illustrator.BtnExitToMenu();
+            }
+        }
     }
 
     //get mouse input, rotate pitch/yaw
