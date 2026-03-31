@@ -59,6 +59,11 @@ public class _worldManager : MonoBehaviour {
     [HideInInspector]public FastNoiseLite caveNoise; //reference to cave noise script (3D)
     [HideInInspector] public FastNoiseLite surfaceNoise; // surface noise reference (2D)
 
+    [Header("Liquids")]
+    public int maxLiquidUpdatesPerFrame = 200;
+    private Queue<Vector3Int> liquidUpdateQueue = new Queue<Vector3Int> ();
+    private HashSet<Vector3Int> liquidInQueue = new HashSet<Vector3Int> (); // for o(1) access
+
     // **OLD UNUSED VARIABLES**
 
     //MAP OF CHUNKS - basically the world storage map
@@ -190,6 +195,9 @@ public class _worldManager : MonoBehaviour {
             chunkUpdateTimer = chunkUpdateInterval;
         }
 
+        //liquids flow update
+        ProcessLiquids();
+
         //internal clock to check chunk update ticks
         tickTimer += Time.deltaTime;
 
@@ -267,6 +275,59 @@ public class _worldManager : MonoBehaviour {
                     }
                 }
             }
+        }
+    }
+
+    //call this function when you are placing water/lava/breaking a block next to water/lava, to update the liquids flowing
+    public void AddLiquidUpdate(Vector3Int pos) {
+        if (!liquidInQueue.Contains(pos)) {
+            liquidUpdateQueue.Enqueue(pos);
+            liquidInQueue.Add(pos);
+        }
+    }
+
+    //actual flow function of liquids
+    private void ProcessLiquids() {
+        int updatesThisFrame = 0;
+
+        while (liquidUpdateQueue.Count > 0 && updatesThisFrame < maxLiquidUpdatesPerFrame) {
+            Vector3Int pos = liquidUpdateQueue.Dequeue();
+            liquidInQueue.Remove(pos);
+
+            byte currentBlock = GetVoxelGlobal(pos);
+
+            //if it's no longer liquid, skip
+            if (currentBlock != (byte)BlockType.Water && currentBlock != (byte)BlockType.Lava) {
+                continue;
+            }
+
+            //first check below the block, if it's air, flow to it
+            Vector3Int downPos = new Vector3Int(pos.x, pos.y - 1, pos.z);
+            byte blockBelow = GetVoxelGlobal(downPos);
+
+            if (blockBelow == (byte)BlockType.Air) {
+                //flow
+                SetVoxelGlobal(downPos, currentBlock);
+                AddLiquidUpdate(downPos); //also send that new liquid block to update queue
+            } else if (VoxelData.HasCollision(blockBelow) || blockBelow == currentBlock) {
+                //but if it's solid block or same liquid, check in laterals to extend
+                Vector3Int[] sides = {
+                    new Vector3Int(pos.x + 1, pos.y, pos.z),
+                    new Vector3Int(pos.x - 1, pos.y, pos.z),
+                    new Vector3Int(pos.x, pos.y, pos.z + 1),
+                    new Vector3Int(pos.x, pos.y, pos.z - 1)
+                };
+
+                //check each direction
+                foreach (Vector3Int sidePos in sides) {
+                    //if its air, liquify
+                    if (GetVoxelGlobal(sidePos) == (byte)BlockType.Air) {
+                        SetVoxelGlobal(sidePos, currentBlock);
+                        AddLiquidUpdate(sidePos);
+                    }
+                }
+            }
+            updatesThisFrame++;
         }
     }
 
@@ -498,6 +559,30 @@ public class _worldManager : MonoBehaviour {
 
             if (localZ == VoxelData.ChunkDepth - 1) {
                 UpdateChunkMesh(new Vector3Int(targetchunkCoord.x, targetchunkCoord.y, targetchunkCoord.z + 1));
+            }
+        }
+
+        //liquids new updates
+        if(blockID == (byte)BlockType.Water || blockID == (byte)BlockType.Lava) {
+            AddLiquidUpdate(globalPos);
+        }
+
+        //if we broke a block, update neighbouring liquids if they exist
+        else if (blockID == (byte)BlockType.Air) {
+            Vector3Int[] checks = {
+                new Vector3Int (globalPos.x, globalPos.y + 1, globalPos.z), //above
+                new Vector3Int (globalPos.x+1, globalPos.y , globalPos.z), // lateralrs
+                new Vector3Int (globalPos.x-1, globalPos.y , globalPos.z),
+                new Vector3Int (globalPos.x, globalPos.y , globalPos.z+1),
+                new Vector3Int (globalPos.x, globalPos.y , globalPos.z-1)
+            };
+            
+            foreach (var checkPos in checks) {
+                byte neighbor = GetVoxelGlobal(checkPos);
+                if(neighbor == (byte)BlockType.Water || neighbor == (byte)BlockType.Lava) {
+                    //update
+                    AddLiquidUpdate(checkPos);
+                }
             }
         }
     }

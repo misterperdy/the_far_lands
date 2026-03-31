@@ -1233,6 +1233,13 @@ MonoBehaviour:
   reach: 4
   highlightBlock: {fileID: 960286}
   interactionDelay: 0.15
+  swimSpeedMultiplier: 0.5
+  swimUpSpeed: 1.5
+  waterGravityMultiplier: 0.2
+  waterTerminalVelocity: -2.5
+  waterExitJumpForce: 6
+  inLiquid: 0
+  inLava: 0
 --- !u!143 &634149125
 CharacterController:
   m_ObjectHideFlags: 0
@@ -3318,6 +3325,7 @@ MonoBehaviour:
   - {fileID: 1687195137664220738, guid: b6081394f4f4a0f4cb3e4f22d041208f, type: 3}
   torchLightPrefab: {fileID: 5866411523380816177, guid: ccfc64b6b5e8b944fa84693a04bcb0e9,
     type: 3}
+  maxLiquidUpdatesPerFrame: 200
 --- !u!4 &1993332512
 Transform:
   m_ObjectHideFlags: 0

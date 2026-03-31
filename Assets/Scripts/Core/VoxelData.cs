@@ -158,6 +158,10 @@ public static class VoxelData
             return new Vector2(5, 3);
         } else if (blockID == (byte)BlockType.Torch) {
             return new Vector2(8, 0);
+        }else if(blockID == (byte)BlockType.Water) {
+            return new Vector2(8, 1);
+        }else if (blockID == (byte)BlockType.Lava) {
+            return new Vector2(8, 2);
         }
 
             //default value - error block
@@ -166,7 +170,7 @@ public static class VoxelData
 
     //fucntion to check if block is transparent
     public static bool IsTransparent(byte blockID) {
-        if (blockID == (byte)BlockType.Air || blockID == (byte)BlockType.Glass || blockID == (byte)BlockType.Leaves || IsCrossModel(blockID)) return true;
+        if (blockID == (byte)BlockType.Air || blockID == (byte)BlockType.Glass || blockID == (byte)BlockType.Leaves || IsCrossModel(blockID) || blockID == (byte)BlockType.Water || blockID == (byte)BlockType.Lava ) return true;
         return false;
     }
 
@@ -178,7 +182,7 @@ public static class VoxelData
 
     //function to check solid blocks (not solid: tall grass etc you can pass through them - they don't add to the mesh collider of the world)
     public static bool HasCollision(byte blockID) {
-        if (blockID == (byte)BlockType.Air || blockID == (byte)BlockType.TallGrass || blockID == (byte)BlockType.RedMushroom || blockID == (byte)BlockType.BrownMushroom) {
+        if (blockID == (byte)BlockType.Air || blockID == (byte)BlockType.TallGrass || blockID == (byte)BlockType.RedMushroom || blockID == (byte)BlockType.BrownMushroom || blockID == (byte)BlockType.Water || blockID == (byte)BlockType.Lava) {
             return false;
         }
 
@@ -188,7 +192,7 @@ public static class VoxelData
     // -------- Terrain Generation data --------
     public static readonly float TerrainNoiseScale = 0.01f; // zoom on noisemap ; smaller = smoother terrain ; larger = rougher terrain
     public static readonly int TerrainHeightMultiplier = 15; //how tall mountains will be
-    public static readonly int TerrainSolidGroundHeight = 64; // base height of world
+    public static readonly int TerrainSolidGroundHeight = 58; // base height of world
 
     //more noise varaibles
     public static readonly float caveNoiseFrequency = 0.02f; // cave size, smaller values: bigger caves
@@ -199,6 +203,9 @@ public static class VoxelData
     //foliage settings
     public static readonly float grassChance = 0.15f;
     public static readonly float treeChance = 0.0025f;
+
+    //water level
+    public static readonly int waterLevel = 60;
 
 
     //ORE spawning and behaviour information, stored in static array of structs
