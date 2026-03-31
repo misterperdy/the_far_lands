@@ -43,6 +43,7 @@ public class _playerController : MonoBehaviour
     public float swimUpSpeed = 3f;
     public float waterGravityMultiplier = 0.2f;
     public float waterTerminalVelocity = -2.5f; // maximum sinking speed
+    public float waterExitJumpForce = 6.5f;
 
     public bool inLiquid = false; //trigger swimming
     public bool inLava = false; //kill the player
@@ -188,7 +189,20 @@ public class _playerController : MonoBehaviour
         if (inLiquid) {
             //SWIM
             if (Input.GetButton("Jump")){
-                velocity.y = Mathf.Lerp(velocity.y, swimUpSpeed, 2f * Time.deltaTime);
+                //check if player is at surface
+                Vector3 headPos = transform.position + new Vector3(0, 1.5f, 0);
+                Vector3Int headVoxelPos = new Vector3Int(Mathf.FloorToInt(headPos.x), Mathf.FloorToInt(headPos.y), Mathf.FloorToInt(headPos.z) );
+
+                byte headBlock = _world.GetVoxelGlobal(headVoxelPos);
+
+                //only boost player when next to ledge
+                if ((headBlock == (byte)BlockType.Air || VoxelData.IsCrossModel(headBlock) ) && IsNearSolidBlock()) {
+                    velocity.y = waterExitJumpForce; //get a boost to climb back to surface
+                } else {
+
+                    //swim regularly
+                    velocity.y = Mathf.Lerp(velocity.y, swimUpSpeed, 2f * Time.deltaTime);
+                }
             } else {
                 velocity.y += (gravity * waterGravityMultiplier) * Time.deltaTime; //slowly sink
             }
@@ -264,6 +278,29 @@ public class _playerController : MonoBehaviour
     private bool IsSafeToStep(Vector3 pos) {
         float y = _controller.bounds.min.y + 0.1f;
         return Physics.Raycast(new Vector3(pos.x, pos.y, pos.z), Vector3.down, 0.3f);
+    }
+
+    //check if near a solid block (used in water to get out of it to help player climb the ledge
+    private bool IsNearSolidBlock() {
+        int x = Mathf.FloorToInt(transform.position.x);
+        int y = Mathf.FloorToInt(transform.position.y ); //where player would want to step
+        int z = Mathf.FloorToInt(transform.position.z);
+
+        //define coords of neightbouring blocks
+        Vector3Int[] neighbors = new Vector3Int[] {
+            new Vector3Int (x+1, y, z),
+            new Vector3Int (x-1, y, z),
+            new Vector3Int (x, y, z+1),
+            new Vector3Int (x, y, z-1)
+        };
+
+        foreach(Vector3Int checkPos in neighbors) {
+            byte blockID = _world.GetVoxelGlobal(checkPos);
+
+            if (VoxelData.HasCollision(blockID))
+                return true; //next to ledge
+        }
+        return false;//we are in middle of water
     }
 
     //check if we are inside liquid
