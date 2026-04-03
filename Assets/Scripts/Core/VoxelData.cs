@@ -198,9 +198,9 @@ public static class VoxelData
     public static readonly float caveNoiseFrequency = 0.02f; // cave size, smaller values: bigger caves
     public static readonly float flattenNoiseExponent = 2.5f; //value 1 will not flatten anything
     public static readonly float surfaceTunnelThreshold = 0.3f; //cave entrance Threshold
-    public static readonly float deepTunnelThreshold = 0.25f; //deep caves Threshold
+    public static readonly float deepTunnelThreshold = 0.15f; //deep caves Threshold
 
-    public static readonly float WormTunnelChance = 0.25f; //chance for a chunk to have worm tunnel generated to try reach a cave if it exists below it
+    public static readonly float WormTunnelChance = 0.2f; //chance for a chunk to have worm tunnel generated to try reach a cave if it exists below it
 
     //foliage settings
     public static readonly float grassChance = 0.15f;

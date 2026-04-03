@@ -171,7 +171,7 @@ public class ChunkData
         //** WORM TUNNELS
 
         if (rng.NextDouble() < VoxelData.WormTunnelChance) {
-            //5% chance to make a tunn el
+            // chance to make a tunn el
             int startX = rng.Next(4, VoxelData.ChunkWidth - 4);
             int startZ = rng.Next(4, VoxelData.ChunkDepth - 4);
 
@@ -260,7 +260,7 @@ public class ChunkData
         }
 
         //make sure its not water level (prevent flooding)
-        if (surfaceY <= VoxelData.waterLevel + 2) return;
+        if (surfaceY <= VoxelData.waterLevel + 4) return;
 
         //find if there is a cave below us
         int targetY = -1;
