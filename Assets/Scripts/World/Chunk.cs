@@ -32,6 +32,9 @@ public class Chunk : MonoBehaviour
     private List<int> colliderTriangles = new List<int>(); // list for triangles WITH collsion
     private List<int> crossColliderTriangles = new List<int>(); // list for triangles WITH RAYCAST COLLISION BUT NO PLAYER COLLISION - for cross blocks/foliage
 
+    //for lava
+    private List<int> emmisiveTriangles = new List<int>();
+
     private Dictionary<Vector3Int, GameObject> activeLights = new Dictionary<Vector3Int, GameObject>(); // active lights in scene
     private List<Vector3Int> currentTorchPositions = new List<Vector3Int>();
 
@@ -87,6 +90,7 @@ public class Chunk : MonoBehaviour
         transparentTriangles.Clear();
         colliderTriangles.Clear();
         crossColliderTriangles.Clear();
+        emmisiveTriangles.Clear();
         uvs.Clear();
         currentTorchPositions.Clear();
         vertexIndex = 0;
@@ -117,6 +121,12 @@ public class Chunk : MonoBehaviour
 
     //add to mesh required/to be drawn faces for this block
     private void UpdateMeshData(Vector3Int pos, byte blockID) {
+
+        //torch smart placing
+        if(blockID == (byte)BlockType.Torch) {
+            DrawSmartTorch(pos, blockID);
+            return;
+        } else
         //if cross model use cross logic
         if (VoxelData.IsCrossModel(blockID)) {
             DrawCrossModel(pos, blockID);
@@ -161,8 +171,17 @@ public class Chunk : MonoBehaviour
                 //in triangles array from 3 in 3 will draw a triangle USING the element at triangles[value] index from vertices as a point.
                 //first 3 - first tirangle, next 3 - secodn triangle, both combined will form the square to be drawn
 
-                //ADD in corresponding list based on block transparency
-                if (isTransparent) {
+                //ADD in corresponding list
+                if(blockID == (byte)BlockType.Lava) {
+                    //emmisive triangles
+                    emmisiveTriangles.Add(vertexIndex);
+                    emmisiveTriangles.Add(vertexIndex + 1);
+                    emmisiveTriangles.Add(vertexIndex + 2);
+                    emmisiveTriangles.Add(vertexIndex + 0);
+                    emmisiveTriangles.Add(vertexIndex + 2);
+                    emmisiveTriangles.Add(vertexIndex + 3);
+                }
+                else if (isTransparent) {
                     transparentTriangles.Add(vertexIndex);
                     transparentTriangles.Add(vertexIndex + 1);
                     transparentTriangles.Add(vertexIndex + 2);
@@ -195,6 +214,42 @@ public class Chunk : MonoBehaviour
                 vertexIndex += 4;
             }
         }
+    }
+
+    //smart torch placing
+    private void DrawSmartTorch(Vector3Int pos, byte blockID) {
+        Vector3 offset = Vector3.zero;
+
+        //check floor
+        if(VoxelData.IsSolidSupport(GetBlockAt(new Vector3Int(pos.x, pos.y - 1, pos.z)))) {
+            //regular placing
+        }else if (VoxelData.IsSolidSupport(GetBlockAt(new Vector3Int(pos.x - 1, pos.y, pos.z)))) {
+            //check walls
+            offset = new Vector3(-0.4f, 0.2f, 0);
+        }
+        else if (VoxelData.IsSolidSupport(GetBlockAt(new Vector3Int(pos.x + 1, pos.y, pos.z)))) {
+            offset = new Vector3(0.4f, 0.2f, 0); 
+        }
+        else if (VoxelData.IsSolidSupport(GetBlockAt(new Vector3Int(pos.x, pos.y, pos.z - 1)))) {
+            offset = new Vector3(0, 0.2f, -0.4f); 
+        }
+        else if (VoxelData.IsSolidSupport(GetBlockAt(new Vector3Int(pos.x, pos.y, pos.z + 1)))) {
+            offset = new Vector3(0, 0.2f, 0.4f);
+        }
+
+        //draw cross model with offset
+        AddCrossFace(pos, blockID,
+            new Vector3(0, 0, 0) + offset,
+            new Vector3(1, 0, 1) + offset,
+            new Vector3(1, 1, 1) + offset,
+            new Vector3(0, 1, 0) + offset);
+        AddCrossFace(pos, blockID,
+            new Vector3(0, 0, 1) + offset,
+            new Vector3(1, 0, 0) + offset,
+            new Vector3(1, 1, 0) + offset,
+            new Vector3(0, 1, 1) + offset);
+
+        //both diagonal faces
     }
 
     //add cross vertices for foilage
@@ -368,9 +423,10 @@ public class Chunk : MonoBehaviour
         mesh.SetUVs(0, uvs);
 
         //split mesh into 2 submeshes, one with opaque material, one with translucent material
-        mesh.subMeshCount = 2;
+        mesh.subMeshCount = 3;
         mesh.SetTriangles(opaqueTriangles, 0); // mat 0
         mesh.SetTriangles(transparentTriangles, 1); // mat 1
+        mesh.SetTriangles(emmisiveTriangles, 2);
 
         if (vertices.Count > 0) {
             mesh.RecalculateNormals(); // for shadows and lights to shine correctly

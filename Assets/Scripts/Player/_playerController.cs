@@ -421,6 +421,10 @@ public class _playerController : MonoBehaviour
                     if (!playerBounds.Intersects(blockBonds)) {
                         //place block if they dont
 
+                        if (selectedBlock == (byte)BlockType.Torch) {
+                            if (hit.normal.y == -1) return; // cant place torces on roof
+                        }
+
                         _world.SetVoxelGlobal(placeCoord, selectedBlock); // place block
 
                         //swing animation

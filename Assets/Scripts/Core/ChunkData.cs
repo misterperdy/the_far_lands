@@ -168,7 +168,77 @@ public class ChunkData
             }
         }
 
-        //3rd pass - add grass to top blocks made dirt by cave generation
+        //** WORM TUNNELS
+
+        if (rng.NextDouble() < VoxelData.WormTunnelChance) {
+            // chance to make a tunn el
+            int startX = rng.Next(4, VoxelData.ChunkWidth - 4);
+            int startZ = rng.Next(4, VoxelData.ChunkDepth - 4);
+
+            GenerateWormTunnel(startX, startZ, chunkCoord, rng);
+        }
+
+        //** SINKHOLES
+        for (int x = 3; x < VoxelData.ChunkWidth - 3; x++) {
+            for (int z = 3; z < VoxelData.ChunkDepth - 3; z++) {
+                if(rng.NextDouble() < VoxelData.SinkholeChance) {
+                    //if rng hit, find floor of first cave
+
+                    int firstCaveFloorY = -1;
+                    for(int y = terrainHeight - 5; y > 15; y--) {
+                        int currentIndex = VoxelData.Get1DIndex(x, y, z);
+                        int aboveIndex = VoxelData.Get1DIndex(x, y + 1, z);
+
+                        if (voxelMap[currentIndex] != (byte)BlockType.Air && voxelMap[aboveIndex] == (byte)BlockType.Air) {
+                            if (voxelMap[currentIndex] == (byte)BlockType.Water || voxelMap[currentIndex] == (byte)BlockType.Lava) break; //liquid protection
+
+                            //found it
+                            firstCaveFloorY = y;
+                            break;
+                        }
+                    }
+
+                    //find roof Y of  cave below
+                    if (firstCaveFloorY != -1) {
+                        int nextCaveCeilingY = -1;
+
+                        for (int y = firstCaveFloorY - 1; y > 5; y--) {
+                            if (voxelMap[VoxelData.Get1DIndex(x, y, z)] == (byte)BlockType.Air) {
+                                nextCaveCeilingY = y;
+                                break; //found
+                            }
+                        }
+
+                        //carve sphere
+                        if(nextCaveCeilingY != -1 && (firstCaveFloorY - nextCaveCeilingY) <= 20) {
+                            //drunk walk
+                            float currentX = x;
+                            float currentZ = z;
+                            float radius = 1.5f;
+
+                            for(int cy = firstCaveFloorY; cy >= nextCaveCeilingY; cy--) {
+                                //go down with sphere
+
+                                CarveSphere(Mathf.RoundToInt(currentX), cy, Mathf.RoundToInt(currentZ), radius);
+
+                                //drunk walk deviation
+                                currentX += (float)(rng.NextDouble() * 1.5f - 0.75f);
+                                currentZ += (float)(rng.NextDouble() * 1.5f - 0.75f);
+
+                                //make sure to not exit chunk
+                                currentX = Mathf.Clamp(currentX, 2, VoxelData.ChunkWidth - 3);
+                                currentZ = Mathf.Clamp(currentZ, 2, VoxelData.ChunkDepth - 3);
+
+                                //dynamic radius pulsation
+                                radius = 1.2f + (float)(rng.NextDouble() * 1.5f); //between 1.2-2.7
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        //add grass to top blocks made dirt by cave generation
         for(int x = 0; x < VoxelData.ChunkWidth; x++) {
             for(int z = 0; z < VoxelData.ChunkDepth; z++) {
 
@@ -207,6 +277,29 @@ public class ChunkData
             }
         }
 
+        //underground mushrooms
+        for(int x = 0; x< VoxelData.ChunkWidth; x++) {
+            for (int z = 0; z < VoxelData.ChunkDepth; z++) {
+                for(int y = 1; y < 50; y++) {
+                    int index = VoxelData.Get1DIndex(x, y, z);
+
+                    if(voxelMap[index] == (byte)BlockType.Dirt) {
+                        int aboveIndex = VoxelData.Get1DIndex(x, y + 1, z);
+
+                        //if its dirt with air above, try spawn mushroom
+                        if (voxelMap[aboveIndex] == (byte)BlockType.Air) {
+
+                            if(rng.NextDouble() < VoxelData.MushroomChance) {
+                                voxelMap[aboveIndex] = (byte)BlockType.BrownMushroom;
+                            }else if (rng.NextDouble() < VoxelData.RedMushroomChance) {
+                                voxelMap[aboveIndex] = (byte)BlockType.RedMushroom;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
         //structures: check chunk again to add trees & tall grass
         for (int x=2;x<VoxelData.ChunkWidth-2;x++) {
             for(int z = 2; z < VoxelData.ChunkDepth - 2; z++) {
@@ -229,6 +322,95 @@ public class ChunkData
                         //tall grass
                         int grassIndex = VoxelData.Get1DIndex(x, surfaceY + 1, z);
                         voxelMap[grassIndex] = (byte)BlockType.TallGrass;
+                    }
+                }
+            }
+        }
+    }
+
+    //generate tunnel go down similar to drunk walk ore style, to recreate natural style
+    private void GenerateWormTunnel(int startX, int startZ, Vector3Int chunkCoord, System.Random prng) {
+        //find surface y
+        int surfaceY = 0;
+        for (int y = VoxelData.ChunkHeight; y > 0; y--) {
+            int index = VoxelData.Get1DIndex(startX, y, startZ);
+
+            if (voxelMap[index] != (byte)BlockType.Air && voxelMap[index] != (byte)BlockType.Water) {
+                //found first solid block from top
+                surfaceY = y;
+                break;
+            }
+        }
+
+        //make sure its not water level (prevent flooding)
+        if (surfaceY <= VoxelData.waterLevel + 4) return;
+
+        //find if there is a cave below us
+        int targetY = -1;
+        for(int y = surfaceY - 5; y > 10; y--) {
+            float globalX = (chunkCoord.x * VoxelData.ChunkWidth) + startX;
+            float globalZ = (chunkCoord.z * VoxelData.ChunkDepth) + startZ;
+            float globalY = y * 2.5f;
+
+            //regenerate same noise used for cave
+            float noiseVal = _world.caveNoise.GetNoise(globalX, globalY, globalZ);
+            float surfaceProximity = (float)y / surfaceY;
+            float noiseThreshold = Mathf.Lerp(VoxelData.deepTunnelThreshold, VoxelData.surfaceTunnelThreshold, surfaceProximity);
+
+            if(noiseVal > noiseThreshold) {
+                targetY = y; //roof of cave found
+                break;
+            }
+        }
+
+        //if we haven't found a cave, abandon the worm
+        if (targetY == -1) return;
+
+        //drunk walk worm, reach the target Y from surface Y
+        Vector3 currentPos = new Vector3(startX, surfaceY, startZ);
+
+        float radius = 2.5f;
+
+        while(currentPos.y > targetY) {
+            //carve sphere
+            CarveSphere(Mathf.RoundToInt(currentPos.x), Mathf.RoundToInt(currentPos.y), Mathf.RoundToInt(currentPos.z), radius);
+
+            //go below and deviate the trajectory for a more realistic look
+            currentPos.y -= 1f;
+            currentPos.x += (float)(prng.NextDouble() * 2f - 1f);
+            currentPos.z += (float)(prng.NextDouble() * 2f - 1f);
+
+            //pulse the radius
+            radius = 1.5f + (float)(prng.NextDouble() * 1.5f); //between 1.5 and 3.0
+        }
+    }
+
+    //carve a sphere at these coordinates, used for worm caves tunnels to look more realistic
+    private void CarveSphere(int cx, int cy, int cz, float radius) {
+        int r = Mathf.CeilToInt(radius);
+        float radiusSquared = radius * radius;
+
+        for (int x = -r; x <= r; x++) {
+            for (int y = -r; y <= r; y++) {
+                for (int z = -r; z <= r; z++) {
+                    //check we are inside the sphere
+                    if (x * x + y * y + z * z <= radiusSquared) {
+
+                        int targetX = cx + x;
+                        int targetY = cy + y;
+                        int targetZ = cz + z;
+
+                        //check to not exit the chunk borders or to break bedrock
+                        if (targetX >= 0 && targetX < VoxelData.ChunkWidth && targetY > 0 && targetY < VoxelData.ChunkHeight && targetZ >= 0 && targetZ < VoxelData.ChunkDepth) {
+
+                            int index = VoxelData.Get1DIndex(targetX, targetY, targetZ);
+                            byte currentBlock = voxelMap[index];
+
+                            //if we hit liqiud/bedorck, don't 
+                            if (currentBlock != (byte)BlockType.Water && currentBlock != (byte)BlockType.Lava && currentBlock != (byte)BlockType.Bedrock) {
+                                voxelMap[index] = (byte)BlockType.Air; //set to air
+                            }
+                        }
                     }
                 }
             }

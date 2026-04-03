@@ -182,10 +182,18 @@ public static class VoxelData
 
     //function to check solid blocks (not solid: tall grass etc you can pass through them - they don't add to the mesh collider of the world)
     public static bool HasCollision(byte blockID) {
-        if (blockID == (byte)BlockType.Air || blockID == (byte)BlockType.TallGrass || blockID == (byte)BlockType.RedMushroom || blockID == (byte)BlockType.BrownMushroom || blockID == (byte)BlockType.Water || blockID == (byte)BlockType.Lava) {
+        if (blockID == (byte)BlockType.Air || blockID == (byte)BlockType.TallGrass || blockID == (byte)BlockType.RedMushroom || blockID == (byte)BlockType.BrownMushroom || blockID == (byte)BlockType.Water || blockID == (byte)BlockType.Lava || blockID == (byte)BlockType.Torch) {
             return false;
         }
 
+        return true;
+    }
+
+    //for torches to link
+    public static bool IsSolidSupport(byte blockID) {
+        if (!HasCollision(blockID) || IsCrossModel(blockID)) {
+            return false;
+        }
         return true;
     }
 
@@ -198,7 +206,13 @@ public static class VoxelData
     public static readonly float caveNoiseFrequency = 0.02f; // cave size, smaller values: bigger caves
     public static readonly float flattenNoiseExponent = 2.5f; //value 1 will not flatten anything
     public static readonly float surfaceTunnelThreshold = 0.3f; //cave entrance Threshold
-    public static readonly float deepTunnelThreshold = 0.25f; //deep caves Threshold
+    public static readonly float deepTunnelThreshold = 0.15f; //deep caves Threshold
+
+    public static readonly float WormTunnelChance = 0.2f; //chance for a chunk to have worm tunnel generated to try reach a cave if it exists below it
+    public static readonly float SinkholeChance = 0.2f; // underground worm tunnel leading to a deeper cave if it exists 
+
+    public static readonly float MushroomChance = 0.5f;
+    public static readonly float RedMushroomChance = 0.2f;
 
     //foliage settings
     public static readonly float grassChance = 0.15f;
@@ -233,5 +247,8 @@ public static class VoxelData
         new OreSettings((byte)BlockType.DiamondOre, 1, 16, 4, 2, 5), // from y 16 , very rare, 
         new OreSettings((byte)BlockType.EmeraldOre, 1, 32, 3, 1, 1), // from y 32, very rare and only one spawns(no vein)
         new OreSettings((byte)BlockType.RubyOre, 1, 1, 2, 1, 3), // only on y=1 right above bedrock and very rare
+
+        //dirt generates here aswell
+        new OreSettings((byte)BlockType.Dirt, 1, 127, 10, 40, 60),
     };
 }
