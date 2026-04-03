@@ -203,6 +203,9 @@ public static class VoxelData
     public static readonly float WormTunnelChance = 0.2f; //chance for a chunk to have worm tunnel generated to try reach a cave if it exists below it
     public static readonly float SinkholeChance = 0.2f; // underground worm tunnel leading to a deeper cave if it exists 
 
+    public static readonly float MushroomChance = 0.5f;
+    public static readonly float RedMushroomChance = 0.2f;
+
     //foliage settings
     public static readonly float grassChance = 0.15f;
     public static readonly float treeChance = 0.0025f;
@@ -236,5 +239,8 @@ public static class VoxelData
         new OreSettings((byte)BlockType.DiamondOre, 1, 16, 4, 2, 5), // from y 16 , very rare, 
         new OreSettings((byte)BlockType.EmeraldOre, 1, 32, 3, 1, 1), // from y 32, very rare and only one spawns(no vein)
         new OreSettings((byte)BlockType.RubyOre, 1, 1, 2, 1, 3), // only on y=1 right above bedrock and very rare
+
+        //dirt generates here aswell
+        new OreSettings((byte)BlockType.Dirt, 1, 127, 10, 40, 60),
     };
 }

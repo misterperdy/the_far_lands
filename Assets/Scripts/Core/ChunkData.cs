@@ -238,7 +238,7 @@ public class ChunkData
             }
         }
 
-        //3rd pass - add grass to top blocks made dirt by cave generation
+        //add grass to top blocks made dirt by cave generation
         for(int x = 0; x < VoxelData.ChunkWidth; x++) {
             for(int z = 0; z < VoxelData.ChunkDepth; z++) {
 
@@ -273,6 +273,29 @@ public class ChunkData
 
                 if (voxelMap[index] == (byte)BlockType.Air) {
                     voxelMap[index] = (byte)BlockType.Lava; //set to lava only if its air to keep stone and ores
+                }
+            }
+        }
+
+        //underground mushrooms
+        for(int x = 0; x< VoxelData.ChunkWidth; x++) {
+            for (int z = 0; z < VoxelData.ChunkDepth; z++) {
+                for(int y = 1; y < 50; y++) {
+                    int index = VoxelData.Get1DIndex(x, y, z);
+
+                    if(voxelMap[index] == (byte)BlockType.Dirt) {
+                        int aboveIndex = VoxelData.Get1DIndex(x, y + 1, z);
+
+                        //if its dirt with air above, try spawn mushroom
+                        if (voxelMap[aboveIndex] == (byte)BlockType.Air) {
+
+                            if(rng.NextDouble() < VoxelData.MushroomChance) {
+                                voxelMap[aboveIndex] = (byte)BlockType.BrownMushroom;
+                            }else if (rng.NextDouble() < VoxelData.RedMushroomChance) {
+                                voxelMap[aboveIndex] = (byte)BlockType.RedMushroom;
+                            }
+                        }
+                    }
                 }
             }
         }
