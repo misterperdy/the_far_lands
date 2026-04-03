@@ -182,10 +182,18 @@ public static class VoxelData
 
     //function to check solid blocks (not solid: tall grass etc you can pass through them - they don't add to the mesh collider of the world)
     public static bool HasCollision(byte blockID) {
-        if (blockID == (byte)BlockType.Air || blockID == (byte)BlockType.TallGrass || blockID == (byte)BlockType.RedMushroom || blockID == (byte)BlockType.BrownMushroom || blockID == (byte)BlockType.Water || blockID == (byte)BlockType.Lava) {
+        if (blockID == (byte)BlockType.Air || blockID == (byte)BlockType.TallGrass || blockID == (byte)BlockType.RedMushroom || blockID == (byte)BlockType.BrownMushroom || blockID == (byte)BlockType.Water || blockID == (byte)BlockType.Lava || blockID == (byte)BlockType.Torch) {
             return false;
         }
 
+        return true;
+    }
+
+    //for torches to link
+    public static bool IsSolidSupport(byte blockID) {
+        if (!HasCollision(blockID) || IsCrossModel(blockID)) {
+            return false;
+        }
         return true;
     }
 

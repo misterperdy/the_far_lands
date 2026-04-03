@@ -121,6 +121,12 @@ public class Chunk : MonoBehaviour
 
     //add to mesh required/to be drawn faces for this block
     private void UpdateMeshData(Vector3Int pos, byte blockID) {
+
+        //torch smart placing
+        if(blockID == (byte)BlockType.Torch) {
+            DrawSmartTorch(pos, blockID);
+            return;
+        } else
         //if cross model use cross logic
         if (VoxelData.IsCrossModel(blockID)) {
             DrawCrossModel(pos, blockID);
@@ -208,6 +214,42 @@ public class Chunk : MonoBehaviour
                 vertexIndex += 4;
             }
         }
+    }
+
+    //smart torch placing
+    private void DrawSmartTorch(Vector3Int pos, byte blockID) {
+        Vector3 offset = Vector3.zero;
+
+        //check floor
+        if(VoxelData.IsSolidSupport(GetBlockAt(new Vector3Int(pos.x, pos.y - 1, pos.z)))) {
+            //regular placing
+        }else if (VoxelData.IsSolidSupport(GetBlockAt(new Vector3Int(pos.x - 1, pos.y, pos.z)))) {
+            //check walls
+            offset = new Vector3(-0.4f, 0.2f, 0);
+        }
+        else if (VoxelData.IsSolidSupport(GetBlockAt(new Vector3Int(pos.x + 1, pos.y, pos.z)))) {
+            offset = new Vector3(0.4f, 0.2f, 0); 
+        }
+        else if (VoxelData.IsSolidSupport(GetBlockAt(new Vector3Int(pos.x, pos.y, pos.z - 1)))) {
+            offset = new Vector3(0, 0.2f, -0.4f); 
+        }
+        else if (VoxelData.IsSolidSupport(GetBlockAt(new Vector3Int(pos.x, pos.y, pos.z + 1)))) {
+            offset = new Vector3(0, 0.2f, 0.4f);
+        }
+
+        //draw cross model with offset
+        AddCrossFace(pos, blockID,
+            new Vector3(0, 0, 0) + offset,
+            new Vector3(1, 0, 1) + offset,
+            new Vector3(1, 1, 1) + offset,
+            new Vector3(0, 1, 0) + offset);
+        AddCrossFace(pos, blockID,
+            new Vector3(0, 0, 1) + offset,
+            new Vector3(1, 0, 0) + offset,
+            new Vector3(1, 1, 0) + offset,
+            new Vector3(0, 1, 1) + offset);
+
+        //both diagonal faces
     }
 
     //add cross vertices for foilage
