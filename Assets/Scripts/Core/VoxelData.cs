@@ -200,6 +200,8 @@ public static class VoxelData
     public static readonly float surfaceTunnelThreshold = 0.3f; //cave entrance Threshold
     public static readonly float deepTunnelThreshold = 0.25f; //deep caves Threshold
 
+    public static readonly float WormTunnelChance = 0.25f; //chance for a chunk to have worm tunnel generated to try reach a cave if it exists below it
+
     //foliage settings
     public static readonly float grassChance = 0.15f;
     public static readonly float treeChance = 0.0025f;
