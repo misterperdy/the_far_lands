@@ -178,6 +178,66 @@ public class ChunkData
             GenerateWormTunnel(startX, startZ, chunkCoord, rng);
         }
 
+        //** SINKHOLES
+        for (int x = 3; x < VoxelData.ChunkWidth - 3; x++) {
+            for (int z = 3; z < VoxelData.ChunkDepth - 3; z++) {
+                if(rng.NextDouble() < VoxelData.SinkholeChance) {
+                    //if rng hit, find floor of first cave
+
+                    int firstCaveFloorY = -1;
+                    for(int y = terrainHeight - 5; y > 15; y--) {
+                        int currentIndex = VoxelData.Get1DIndex(x, y, z);
+                        int aboveIndex = VoxelData.Get1DIndex(x, y + 1, z);
+
+                        if (voxelMap[currentIndex] != (byte)BlockType.Air && voxelMap[aboveIndex] == (byte)BlockType.Air) {
+                            if (voxelMap[currentIndex] == (byte)BlockType.Water || voxelMap[currentIndex] == (byte)BlockType.Lava) break; //liquid protection
+
+                            //found it
+                            firstCaveFloorY = y;
+                            break;
+                        }
+                    }
+
+                    //find roof Y of  cave below
+                    if (firstCaveFloorY != -1) {
+                        int nextCaveCeilingY = -1;
+
+                        for (int y = firstCaveFloorY - 1; y > 5; y--) {
+                            if (voxelMap[VoxelData.Get1DIndex(x, y, z)] == (byte)BlockType.Air) {
+                                nextCaveCeilingY = y;
+                                break; //found
+                            }
+                        }
+
+                        //carve sphere
+                        if(nextCaveCeilingY != -1 && (firstCaveFloorY - nextCaveCeilingY) <= 20) {
+                            //drunk walk
+                            float currentX = x;
+                            float currentZ = z;
+                            float radius = 1.5f;
+
+                            for(int cy = firstCaveFloorY; cy >= nextCaveCeilingY; cy--) {
+                                //go down with sphere
+
+                                CarveSphere(Mathf.RoundToInt(currentX), cy, Mathf.RoundToInt(currentZ), radius);
+
+                                //drunk walk deviation
+                                currentX += (float)(rng.NextDouble() * 1.5f - 0.75f);
+                                currentZ += (float)(rng.NextDouble() * 1.5f - 0.75f);
+
+                                //make sure to not exit chunk
+                                currentX = Mathf.Clamp(currentX, 2, VoxelData.ChunkWidth - 3);
+                                currentZ = Mathf.Clamp(currentZ, 2, VoxelData.ChunkDepth - 3);
+
+                                //dynamic radius pulsation
+                                radius = 1.2f + (float)(rng.NextDouble() * 1.5f); //between 1.2-2.7
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
         //3rd pass - add grass to top blocks made dirt by cave generation
         for(int x = 0; x < VoxelData.ChunkWidth; x++) {
             for(int z = 0; z < VoxelData.ChunkDepth; z++) {
