@@ -149,10 +149,11 @@ public class _gameManager : MonoBehaviour
     }
 
     public void GameOver() {
-        //unlock cursor
-        Cursor.lockState = CursorLockMode.None;
-        Cursor.visible = true;
-        //send to menu
-        SceneManager.LoadScene("Title Screen");
+        _gameIllustrator _illustrator = GameObject.FindAnyObjectByType<_gameIllustrator>();
+
+        if(_illustrator != null) {
+            //call game over on it
+            _illustrator.ShowGameOver();
+        }
     }
 }
