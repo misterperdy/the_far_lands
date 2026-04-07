@@ -382,6 +382,13 @@ public class _playerController : MonoBehaviour
                     _world.SetVoxelGlobal(breakCoord, (byte)BlockType.Air); // we replace block with air
                     _world.SpawnBlockParticles(breakCoord, blockToBreak); //spawn destruction particles
 
+                    //check what block it was if it gives score
+                    if (VoxelData.ScoreValue(blockToBreak) > 0) {
+                        if(_manager != null) {
+                            _manager.IncreaseScore(VoxelData.ScoreValue(blockToBreak)); //updatea player score
+                        }
+                    }
+
                     //check if foilage above break it also
                     Vector3Int blockAboveCoord = new Vector3Int(breakCoord.x, breakCoord.y + 1, breakCoord.z);
 

@@ -238,6 +238,26 @@ public static class VoxelData
         }
     }
 
+    //SCORE VALUES FOR ORES
+    public static int ScoreValue (byte block) {
+        if(block == (byte)BlockType.CoalOre) {
+            return 10;
+        }else if (block == (byte)BlockType.CopperOre) {
+            return 15;
+        } else if (block == (byte)BlockType.IronOre) {
+            return 30;
+        } else if (block == (byte)BlockType.GoldOre) {
+            return 60;
+        } else if (block == (byte)BlockType.DiamondOre) {
+            return 100;
+        } else if (block == (byte)BlockType.EmeraldOre) {
+            return 150;
+        } else if (block == (byte)BlockType.RubyOre) {
+            return 300;
+        } else
+            return 0;
+    }
+
     //static array
     public static readonly OreSettings[] Ores = new OreSettings[] {
         new OreSettings((byte)BlockType.CoalOre, 1, 127, 20, 4, 10), //any Y , alot of them

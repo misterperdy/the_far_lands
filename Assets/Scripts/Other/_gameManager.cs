@@ -90,7 +90,9 @@ public class _gameManager : MonoBehaviour
         Debug.Log("screenshot taken: " + fileName);
     }
 
-
+    public void IncreaseScore(int scoreToAdd) {
+        playerScore += scoreToAdd;
+    }
 
     public void GameOver() {
         //unlock cursor
