@@ -1,12 +1,22 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.SceneManagement;
+using UnityEngine.UI;
 
 public class _gameManager : MonoBehaviour
 {
     public bool isPaused = false;
 
     public GameObject gameGUI; //hotbar , other ui canvas to hide for screenshot
+
+
+    [Header("Score&Time")]
+    public float timeToPlayInSeconds = 600; //10 minutes
+    public Text ScoreText;
+    public Text TimeText;
+    public int playerScore;
+    public float timeRemaining;
 
     //helper pause/resume functions for pause menu
     public void PauseGame() {
@@ -27,8 +37,19 @@ public class _gameManager : MonoBehaviour
         Cursor.visible = false;
     }
 
+    private void Start() {
+
+        //set player score & time
+        playerScore = 0;
+        timeRemaining = timeToPlayInSeconds;
+    }
+
     void Update() {
         if (isPaused) return; //dont take screenshots/hide gui when paused
+
+        if (timeRemaining <= 0) {
+            GameOver();
+        }
 
         //listen for screenshot key (F2)
         if (Input.GetKeyDown(KeyCode.F2)) {
@@ -41,6 +62,21 @@ public class _gameManager : MonoBehaviour
                 //if hide enable, if enabled hide
                 gameGUI.SetActive(!gameGUI.activeSelf);
             }
+        }
+
+        // time updating
+        timeRemaining -= Time.deltaTime;
+
+        //time & score text updating
+        if (TimeText != null) {
+            float minutes = Mathf.FloorToInt(timeRemaining / 60);
+            float seconds = Mathf.FloorToInt(timeRemaining % 60);
+
+            //format to always show 2 digits
+            TimeText.text = string.Format("Time remaining: {0:00}:{1:00}", minutes, seconds);
+        }
+        if (ScoreText != null) {
+            ScoreText.text = "Score: " + playerScore.ToString();
         }
     }
 
@@ -55,4 +91,12 @@ public class _gameManager : MonoBehaviour
     }
 
 
+
+    public void GameOver() {
+        //unlock cursor
+        Cursor.lockState = CursorLockMode.None;
+        Cursor.visible = true;
+        //send to menu
+        SceneManager.LoadScene("Title Screen");
+    }
 }

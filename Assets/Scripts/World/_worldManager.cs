@@ -4,6 +4,7 @@ using Unity.VisualScripting;
 using UnityEngine;
 using System.Threading.Tasks;
 using System.Collections.Concurrent;
+using UnityEngine.UI;
 
 public class _worldManager : MonoBehaviour {
     //assign in inspector
@@ -31,6 +32,7 @@ public class _worldManager : MonoBehaviour {
 
     [Header("Lighting")]
     public GameObject torchLightPrefab;
+
 
     //spawning variables/timer
     private bool isPlayerSpawned = false;
@@ -126,6 +128,7 @@ public class _worldManager : MonoBehaviour {
     }
 
     private void Update() {
+        
         //spawning player logic
         if (!isPlayerSpawned) {
             spawnCheckTimer -= Time.deltaTime;
@@ -205,6 +208,7 @@ public class _worldManager : MonoBehaviour {
             tickTimer = 0f;
             ProcessRandomTicks();
         }
+
     }
 
     //pick a few blocks per chunk to update every time function hits - right now used for dirt-grass conversion

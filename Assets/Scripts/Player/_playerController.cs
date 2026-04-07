@@ -105,12 +105,9 @@ public class _playerController : MonoBehaviour
         HandleMovement();
         HandleInteraction();
 
-        //for now, kill player=send to menu if touching lava
+        //kill player if touching lava
         if (inLava) {
-            _gameIllustrator _illustrator = GameObject.FindAnyObjectByType<_gameIllustrator>();
-            if (_illustrator != null) {
-                _illustrator.BtnExitToMenu();
-            }
+            if (_manager != null) _manager.GameOver();
         }
     }
 
