@@ -15,8 +15,12 @@ public class _gameManager : MonoBehaviour
     public float timeToPlayInSeconds = 600; //10 minutes
     public Text ScoreText;
     public Text TimeText;
+    public Text popupText;
     public int playerScore;
     public float timeRemaining;
+    public float popupDuration = 1f; // 1 second
+
+    private float popupTimer = 0f; //internal popup timer
 
     //helper pause/resume functions for pause menu
     public void PauseGame() {
@@ -38,6 +42,8 @@ public class _gameManager : MonoBehaviour
     }
 
     private void Start() {
+        //make sure popup is hidden
+        popupText.gameObject.SetActive(false);
 
         //set player score & time
         playerScore = 0;
@@ -67,6 +73,15 @@ public class _gameManager : MonoBehaviour
         // time updating
         timeRemaining -= Time.deltaTime;
 
+        //check popup score text
+        if(popupTimer > 0) {
+            popupTimer -= Time.deltaTime;
+
+            if(popupTimer <= 0) {
+                popupText.gameObject.SetActive(false); // hide popup text go
+            }
+        }
+
         //time & score text updating
         if (TimeText != null) {
             float minutes = Mathf.FloorToInt(timeRemaining / 60);
@@ -92,6 +107,13 @@ public class _gameManager : MonoBehaviour
 
     public void IncreaseScore(int scoreToAdd) {
         playerScore += scoreToAdd;
+
+        //also show popup
+        popupText.gameObject.SetActive(true);
+        popupText.text = "+" + scoreToAdd + " score";
+
+        //reset timer
+        popupTimer = popupDuration;
     }
 
     public void GameOver() {
