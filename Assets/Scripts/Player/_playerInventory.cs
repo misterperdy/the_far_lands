@@ -18,8 +18,9 @@ public class _playerInventory : MonoBehaviour
         hotbar[2] = (byte)BlockType.IronOre;
         hotbar[3] = (byte)BlockType.GoldOre;
         hotbar[4] = (byte)BlockType.DiamondOre;
-        hotbar[5] = (byte)BlockType.EmeraldOre;
-        hotbar[6] = (byte)BlockType.RubyOre;
+
+        hotbar[6] = (byte)BlockType.RedMushroom;
+        hotbar[7] = (byte)BlockType.BrownMushroom;
         hotbar[8] = (byte)BlockType.Torch;
 
         //update hotbar

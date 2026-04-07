@@ -16,11 +16,15 @@ public class _gameManager : MonoBehaviour
     public Text ScoreText;
     public Text TimeText;
     public Text popupText;
+    public Text popupTimeText;
     public int playerScore;
     public float timeRemaining;
     public float popupDuration = 1f; // 1 second
+    public float smallTimeAdd = 30f; //30 seconds, brown mushroom
+    public float bigTimeAdd = 60f; //1 minute, red mushroom
 
     private float popupTimer = 0f; //internal popup timer
+    private float popupTimeTimer = 0f; // for the +time popup
 
     //helper pause/resume functions for pause menu
     public void PauseGame() {
@@ -44,6 +48,7 @@ public class _gameManager : MonoBehaviour
     private void Start() {
         //make sure popup is hidden
         popupText.gameObject.SetActive(false);
+        popupTimeText.gameObject.SetActive(false);
 
         //set player score & time
         playerScore = 0;
@@ -82,6 +87,15 @@ public class _gameManager : MonoBehaviour
             }
         }
 
+        //check popup time text
+        if (popupTimeTimer > 0) {
+            popupTimeTimer -= Time.deltaTime;
+
+            if (popupTimeTimer <= 0) {
+                popupTimeText.gameObject.SetActive(false); // hide popup text go
+            }
+        }
+
         //time & score text updating
         if (TimeText != null) {
             float minutes = Mathf.FloorToInt(timeRemaining / 60);
@@ -114,6 +128,24 @@ public class _gameManager : MonoBehaviour
 
         //reset timer
         popupTimer = popupDuration;
+    }
+
+    //when breaking a mushroom
+    public void AddTime(bool redMushroom = false) {
+        //also set popup text
+        popupTimeText.gameObject.SetActive(true);
+
+        if (redMushroom) {
+            timeRemaining += bigTimeAdd;
+
+            popupTimeText.text = "+" + bigTimeAdd + " seconds";
+        } else {
+            timeRemaining += smallTimeAdd;
+
+            popupTimeText.text = "+" + smallTimeAdd + " seconds";
+        }
+        //reset timer
+        popupTimeTimer = popupDuration;
     }
 
     public void GameOver() {
