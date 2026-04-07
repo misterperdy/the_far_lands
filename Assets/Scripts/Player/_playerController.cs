@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
@@ -105,12 +106,9 @@ public class _playerController : MonoBehaviour
         HandleMovement();
         HandleInteraction();
 
-        //for now, kill player=send to menu if touching lava
+        //kill player if touching lava
         if (inLava) {
-            _gameIllustrator _illustrator = GameObject.FindAnyObjectByType<_gameIllustrator>();
-            if (_illustrator != null) {
-                _illustrator.BtnExitToMenu();
-            }
+            if (_manager != null) _manager.GameOver();
         }
     }
 
@@ -385,6 +383,25 @@ public class _playerController : MonoBehaviour
                     _world.SetVoxelGlobal(breakCoord, (byte)BlockType.Air); // we replace block with air
                     _world.SpawnBlockParticles(breakCoord, blockToBreak); //spawn destruction particles
 
+                    //check what block it was if it gives score
+                    if (VoxelData.ScoreValue(blockToBreak) > 0) {
+                        if(_manager != null) {
+                            _manager.IncreaseScore(VoxelData.ScoreValue(blockToBreak)); //updatea player score
+                        }
+                    }
+
+                    //if it's mushroom add time
+                    if(blockToBreak == (byte)BlockType.BrownMushroom) {
+                        if(_manager != null) {
+                            _manager.AddTime(false);
+                        }
+                    }
+                    if (blockToBreak == (byte)BlockType.RedMushroom) {
+                        if (_manager != null) {
+                            _manager.AddTime(true);
+                        }
+                    }
+
                     //check if foilage above break it also
                     Vector3Int blockAboveCoord = new Vector3Int(breakCoord.x, breakCoord.y + 1, breakCoord.z);
 
@@ -394,6 +411,18 @@ public class _playerController : MonoBehaviour
                     if (VoxelData.IsCrossModel(blockAboveID)) {
                         _world.SetVoxelGlobal(blockAboveCoord, (byte)BlockType.Air);
                         _world.SpawnBlockParticles(blockAboveCoord, blockAboveID); //spawn destruction particles
+
+                        //if it's mushroom add time
+                        if (blockAboveID == (byte)BlockType.BrownMushroom) {
+                            if (_manager != null) {
+                                _manager.AddTime(false);
+                            }
+                        }
+                        if (blockAboveID == (byte)BlockType.RedMushroom) {
+                            if (_manager != null) {
+                                _manager.AddTime(true);
+                            }
+                        }
                     }
                 }
             }

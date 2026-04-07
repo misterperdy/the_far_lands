@@ -11,6 +11,11 @@ public class _gameIllustrator : MonoBehaviour
     public GameObject pauseMenuUI;
     public GameObject gameUI; // hide crosshair
 
+    public GameObject gameOverUI;
+
+    public Text deathMessage;
+    public Text gameOverScoreText;
+
     [Header("Hotbar UI")]
     public _playerInventory _inventoryScript;
     public RawImage[] hotbarSlotImages = new RawImage[9]; //set effective blocks in hotbar
@@ -19,6 +24,7 @@ public class _gameIllustrator : MonoBehaviour
     void Start()
     {
         _manager = FindObjectOfType<_gameManager>(); //grab game manager
+        _manager.ResumeGame(); // make sure game is running
     }
 
     // Update is called once per frame
@@ -85,10 +91,42 @@ public class _gameIllustrator : MonoBehaviour
     public void BtnExitToMenu() {
         _manager.ResumeGame(); // so we are not frozen in time
 
+
+
         //unlock cursor
         Cursor.lockState = CursorLockMode.None;
         Cursor.visible = true;
 
         SceneManager.LoadScene("Title Screen");
+    }
+
+    //reload game
+    public void BtnTryAgain() {
+        //UNPAUSE GAME
+        _manager.ResumeGame();
+
+        SceneManager.LoadScene(SceneManager.GetActiveScene().name);
+    }
+
+    public void ShowGameOver() {
+        //set game over score text
+        gameOverScoreText.text = "Final score: " + _manager.playerScore;
+
+        //if time is not up, show lava text
+        if(_manager.timeRemaining > 0) {
+            deathMessage.text = "You took a hot bath in lava!";
+        }
+
+        //disable hud, enable game over hud , freze time
+        gameOverUI.SetActive(true);
+        gameUI.SetActive(false);
+
+        //unlock cursor
+        Cursor.lockState = CursorLockMode.None;
+        Cursor.visible = true;
+
+
+        _manager.PauseGame();
+
     }
 }
