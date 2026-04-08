@@ -48,12 +48,16 @@ public class _playerController : MonoBehaviour
 
     public bool inLiquid = false; //trigger swimming
     public bool inLava = false; //kill the player
+    private bool wasInLiquid = false; //keep track of previous state to play sound effect
+    public float splashCooldown = 0.5f;
+    private float lastSplashTime = -1f;
 
     private _worldManager _world;
     private CharacterController _controller;
     private _gameManager _manager;
     private _playerInventory _inventoryScript;
     private _viewmodelController _viewModel;
+    private _sfxManager _sfxManager;
 
     private Vector3 velocity;
     private Vector3 currentMoveVelocity;
@@ -68,6 +72,10 @@ public class _playerController : MonoBehaviour
         _world = FindObjectOfType<_worldManager>();
         _manager = FindObjectOfType<_gameManager>();
         _inventoryScript = GetComponent<_playerInventory>();
+
+        if(_manager != null) {
+            _sfxManager = _manager.gameObject.GetComponent<_sfxManager>();
+        }
 
         if(_inventoryScript != null) {
             _viewModel = _inventoryScript._viewmodelController; //grab viewmodel controller from inventory
@@ -109,10 +117,44 @@ public class _playerController : MonoBehaviour
         //check state if you are in liquids or not
         CheckLiquids();
 
+        //check to play liquid sound effects
+        if(inLiquid && !wasInLiquid) {
+            if(Time.time - lastSplashTime >= splashCooldown) {
+                //entered water, play sound
+                if (_sfxManager != null) _sfxManager.PlayEnterWater();
+
+                lastSplashTime = Time.time;
+            }
+            
+        }else if(!inLiquid && wasInLiquid) {
+            if (Time.time - lastSplashTime >= splashCooldown) {
+                //exited water
+                if (_sfxManager != null) _sfxManager.PlayExitWater();
+
+                lastSplashTime = Time.time;
+            }
+
+        }
+
+        wasInLiquid = inLiquid; //save current liquid state
+
         //not paused, update everything
         HandleMouseLook();
         HandleMovement();
         HandleInteraction();
+
+        //handle footstep sounds
+        Vector3 horizontalVelocity = new Vector3(_controller.velocity.x, 0, _controller.velocity.z);
+        bool isMoving = false;
+        if(horizontalVelocity.magnitude > 0.1f) {
+            isMoving = true;
+        }
+        if(_controller.isGrounded && !inLiquid && isMoving) {
+            _sfxManager.PlayFootsteps();
+
+        } else {
+            _sfxManager.StopFootsteps();
+        }
 
         //kill player if touching lava
         if (inLava) {
@@ -391,10 +433,20 @@ public class _playerController : MonoBehaviour
                     _world.SetVoxelGlobal(breakCoord, (byte)BlockType.Air); // we replace block with air
                     _world.SpawnBlockParticles(breakCoord, blockToBreak); //spawn destruction particles
 
+                    //play sound
+                    if(_sfxManager != null) {
+                        _sfxManager.PlayBlockSound();
+                    }
+
                     //check what block it was if it gives score
                     if (VoxelData.ScoreValue(blockToBreak) > 0) {
                         if(_manager != null) {
                             _manager.IncreaseScore(VoxelData.ScoreValue(blockToBreak)); //updatea player score
+                        }
+
+                        //play sound
+                        if (_sfxManager != null) {
+                            _sfxManager.PlayDingShort();
                         }
                     }
 
@@ -403,10 +455,20 @@ public class _playerController : MonoBehaviour
                         if(_manager != null) {
                             _manager.AddTime(false);
                         }
+
+                        //play sound
+                        if (_sfxManager != null) {
+                            _sfxManager.PlayDingLong();
+                        }
                     }
                     if (blockToBreak == (byte)BlockType.RedMushroom) {
                         if (_manager != null) {
                             _manager.AddTime(true);
+                        }
+
+                        //play sound
+                        if (_sfxManager != null) {
+                            _sfxManager.PlayDingLong();
                         }
                     }
 
@@ -425,10 +487,20 @@ public class _playerController : MonoBehaviour
                             if (_manager != null) {
                                 _manager.AddTime(false);
                             }
+
+                            //play sound
+                            if (_sfxManager != null) {
+                                _sfxManager.PlayDingLong();
+                            }
                         }
                         if (blockAboveID == (byte)BlockType.RedMushroom) {
                             if (_manager != null) {
                                 _manager.AddTime(true);
+                            }
+
+                            //play sound
+                            if (_sfxManager != null) {
+                                _sfxManager.PlayDingLong();
                             }
                         }
                     }
@@ -463,6 +535,11 @@ public class _playerController : MonoBehaviour
                         }
 
                         _world.SetVoxelGlobal(placeCoord, selectedBlock); // place block
+
+                        //play sound
+                        if (_sfxManager != null) {
+                            _sfxManager.PlayBlockSound();
+                        }
 
                         //swing animation
                         if (_viewModel != null) {

@@ -16,6 +16,10 @@ public class _gameIllustrator : MonoBehaviour
     public Text deathMessage;
     public Text gameOverScoreText;
 
+
+    public _sfxManager _sfxManager;
+    public GameObject musicGO;
+
     public GameObject OptionsCanvasPrefab;
 
     [Header("Hotbar UI")]
@@ -128,6 +132,15 @@ public class _gameIllustrator : MonoBehaviour
         Cursor.lockState = CursorLockMode.None;
         Cursor.visible = true;
 
+        //stop music
+        if (musicGO != null) {
+            Destroy(musicGO);
+        }
+
+        //play death sound
+        if (_sfxManager != null) {
+            _sfxManager.PlayDeath();
+        }
 
         _manager.PauseGame();
 

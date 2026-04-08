@@ -150,10 +150,11 @@ public class _gameManager : MonoBehaviour
 
     public void GameOver() {
         _gameIllustrator _illustrator = GameObject.FindAnyObjectByType<_gameIllustrator>();
-
-        if(_illustrator != null) {
+        if (_illustrator != null) {
             //call game over on it
             _illustrator.ShowGameOver();
         }
+
+        
     }
 }
