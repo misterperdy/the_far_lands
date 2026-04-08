@@ -16,6 +16,8 @@ public class _gameIllustrator : MonoBehaviour
     public Text deathMessage;
     public Text gameOverScoreText;
 
+    public GameObject OptionsCanvasPrefab;
+
     [Header("Hotbar UI")]
     public _playerInventory _inventoryScript;
     public RawImage[] hotbarSlotImages = new RawImage[9]; //set effective blocks in hotbar
@@ -84,8 +86,9 @@ public class _gameIllustrator : MonoBehaviour
         }
     }
 
+    //instnatiate the options menu over the pause screen/title screen
     public void BtnOptions() {
-        //tbd
+        Instantiate(OptionsCanvasPrefab);
     }
 
     public void BtnExitToMenu() {

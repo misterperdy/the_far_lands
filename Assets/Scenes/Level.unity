@@ -4510,6 +4510,8 @@ MonoBehaviour:
   gameOverUI: {fileID: 1436477096}
   deathMessage: {fileID: 536992223}
   gameOverScoreText: {fileID: 1177239470}
+  OptionsCanvasPrefab: {fileID: 2837479511960260136, guid: 8af12e6572dbd904da501814ab3f5970,
+    type: 3}
   _inventoryScript: {fileID: 634149127}
   hotbarSlotImages:
   - {fileID: 604804546}

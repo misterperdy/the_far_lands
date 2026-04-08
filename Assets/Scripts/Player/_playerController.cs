@@ -29,8 +29,8 @@ public class _playerController : MonoBehaviour
     public float sneakCameraY;
     public float cameraTransitionSpeed = 10f;
 
-    public float normalFOV; // will be overwritten by camera
-    public float sprintFOV = 85; //assign in inspector
+    public float normalFOV;
+    //public float sprintFOV = 85; //not used anymore, add 15 to normal fov
     public float fovTransitionSpeed = 10f;
 
     [Header("Interaction Setttings")]
@@ -85,7 +85,7 @@ public class _playerController : MonoBehaviour
             //get component
             _cameraComponent = playerCamera.GetComponent<Camera>();
             if (_cameraComponent != null) {
-                normalFOV = _cameraComponent.fieldOfView;
+                //normalFOV = _cameraComponent.fieldOfView; no longer overwrite it
             }
         } else { Debug.Log("player camera not assigned!"); }
     }
@@ -171,7 +171,7 @@ public class _playerController : MonoBehaviour
 
         //fov change for sprint
         if(_cameraComponent != null) {
-            float targetFOV = isSprinting ? sprintFOV : normalFOV;
+            float targetFOV = isSprinting ? (normalFOV + 15) : normalFOV;
             _cameraComponent.fieldOfView = Mathf.Lerp(_cameraComponent.fieldOfView, targetFOV, fovTransitionSpeed * Time.deltaTime); // lerp through fovs
         }
 
