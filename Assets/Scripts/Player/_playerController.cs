@@ -73,6 +73,14 @@ public class _playerController : MonoBehaviour
             _viewModel = _inventoryScript._viewmodelController; //grab viewmodel controller from inventory
         }
 
+        //grab from prefs sensivity & fov
+        float savedSens = PlayerPrefs.GetFloat("Sensitivity", 2f);
+        float savedFOV = PlayerPrefs.GetFloat("FOV", 60f);
+
+        //set values
+        mouseSensitivity = savedSens;
+        normalFOV = savedFOV;
+
         //lock cursor in middle
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible = false;

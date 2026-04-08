@@ -173,7 +173,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
   m_Color: {r: 0.19607843, g: 0.19607843, b: 0.19607843, a: 1}
-  m_RaycastTarget: 1
+  m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
   m_OnCullStateChanged:
@@ -796,6 +796,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _camera: {fileID: 899690541}
+  OptionsCanvasPrefab: {fileID: 2837479511960260136, guid: 8af12e6572dbd904da501814ab3f5970,
+    type: 3}
   cameraRotationSpeed: 2
 --- !u!4 &1238870378
 Transform:
@@ -1148,7 +1150,7 @@ PrefabInstance:
     - target: {fileID: 5726633338699330323, guid: 9574c99cee8de884684c2e16b83d9c93,
         type: 3}
       propertyPath: m_Text
-      value: Start Level
+      value: Play Game
       objectReference: {fileID: 0}
     - target: {fileID: 6336866173925926408, guid: 9574c99cee8de884684c2e16b83d9c93,
         type: 3}

@@ -7,6 +7,9 @@ public class _mainMenuManager : MonoBehaviour
 {
     public Camera _camera;
 
+
+    public GameObject OptionsCanvasPrefab;
+
     //camera rotate panoramic view
     public float cameraRotationSpeed = 2.0f;
 
@@ -20,7 +23,7 @@ public class _mainMenuManager : MonoBehaviour
     }
 
     public void BtnOptions() {
-        //tbd
+        Instantiate(OptionsCanvasPrefab);
     }
 
     public void BtnExit() {
